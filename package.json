@@ -2,8 +2,8 @@
   "name": "rateio",
   "version": "1.0.0",
   "scripts": {
-    "start": "./node_modules/.bin/serverless offline -s dev",
-    "debug": "SET SLS_DEBUG=* && node --inspect %USERPROFILE%\\AppData\\Roaming\\npm\\node_modules\\serverless\\bin\\serverless offline -s dev"
+    "start": ".\\node_modules\\.bin\\serverless offline -s dev",
+    "debug:win": "SET SLS_DEBUG=* && node --inspect %USERPROFILE%\\AppData\\Roaming\\npm\\node_modules\\serverless\\bin\\serverless offline -s dev"
   },
   "devDependencies": {
     "serverless": "^1.26.1",

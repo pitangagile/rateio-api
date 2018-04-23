@@ -8,10 +8,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Api",
+      "name": "Api Windows",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["debug"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "debug:win"],
       "port": 9229
     }
   ]

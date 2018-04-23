@@ -35,7 +35,7 @@ functions:
       - http:
           path: ping
           method: get
-  
+
   regularLogin:
     handler: functions/auth/handler.regularLogin
     events:
@@ -66,6 +66,14 @@ functions:
       - http:
           path: api/validateToken
           method: post
+          cors: true
+
+  getCoastCenters:
+    handler: functions/coastCenter/handler.getAll
+    events:
+      - http:
+          path: api/getCoastCenters
+          method: get
           cors: true
 
 custom:
