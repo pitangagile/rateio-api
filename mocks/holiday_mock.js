@@ -1,0 +1,26 @@
+const holidays = [
+    {id: '1', day:'01', month: 'Janeiro', year: '2018', dayofweek: 'Segunda-feira', description: 'Confraternização Universal', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '2', day:'12', month: 'Fevereiro', year: '2018', dayofweek: 'Segunda-feira', description: 'Carnaval', classification: 'Não é feriado', daydescription:'Abono', percentageWorked: '0', percentageWorked: '0'},
+    {id: '3', day:'13', month: 'Fevereiro', year: '2018', dayofweek: 'Terça-feira', description: 'Carnaval', classification: 'Não é feriado', daydescription:'Abono', percentageWorked: '0'},
+    {id: '4', day:'14', month: 'Fevereiro', year: '2018', dayofweek: 'Quarta-feira', description: 'Cinzas', classification: 'Não é feriado', daydescription:'Expediente a partir das 12h', percentageWorked: '50'},
+    {id: '5', day:'06', month: 'Março', year: '2018', dayofweek: 'Terça-feira', description: 'Data Magnata (Lei 16.059/2017)', classification: 'Estadual', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '6', day:'29', month: 'Março', year: '2018', dayofweek: 'Quita-feira', description: 'Dia que antecede a sexta-feira da Paixão', classification: 'Não é feriado', daydescription:'Expediente normal', percentageWorked: '100'},
+    {id: '7', day:'30', month: 'Março', year: '2018', dayofweek: 'Sexta-feira', description: 'Sexta-feira Santa', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '8', day:'01', month: 'Abril', year: '2018', dayofweek: 'Domingo', description: 'Páscoa', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '9', day:'21', month: 'Abril', year: '2018', dayofweek: 'Sábado', description: 'Tiradentes', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '10', day:'01', month: 'Maio', year: '2018', dayofweek: 'Terça-feira', description: 'Dia do trabalhador', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '11', day:'31', month: 'Abril', year: '2018', dayofweek: 'Quinta-feira', description: 'Corpus Christi', classification: 'Nacional', daydescription:'Expediente normal, será substituído pelo São João', percentageWorked: '100'},
+    {id: '12', day:'23', month: 'Junho', year: '2018', dayofweek: 'Sábado', description: 'Dia que antecede o São João', classification: 'Não é feriado', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '13', day:'24', month: 'Junho', year: '2018', dayofweek: 'Domingo', description: 'São João', classification: 'Estadual', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '14', day:'16', month: 'Julho', year: '2018', dayofweek: 'Segunda-feira', description: 'Dia de Nossa Senhora do Carmo', classification: 'Municipal', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '15', day:'07', month: 'Setembro', year: '2018', dayofweek: 'Sexta-feira', description: 'Independência do Brasil', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '16', day:'12', month: 'Outubro', year: '2018', dayofweek: 'Sexta-feira', description: 'Nossa Senhora Aparecida', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '17', day:'02', month: 'Novembro', year: '2018', dayofweek: 'Sexta-feira', description: 'Finados', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '18', day:'15', month: 'Novembro', year: '2018', dayofweek: 'Quinta-feira', description: 'Procamação da República', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '19', day:'08', month: 'Dezembro', year: '2018', dayofweek: 'Sábado', description: 'Nossa Senhora da Conceição', classification: 'Municipal', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '20', day:'24', month: 'Dezembro', year: '2018', dayofweek: 'Segunda-feira', description: 'Véspera de Natal', classification: 'Não é feriado', daydescription:'Meio expediente', percentageWorked: '0'},
+    {id: '21', day:'25', month: 'Dezembro', year: '2018', dayofweek: 'Terça-feira', description: 'Natal', classification: 'Nacional', daydescription:'Não haverá expediente', percentageWorked: '0'},
+    {id: '22', day:'31', month: 'Dezembro', year: '2018', dayofweek: 'Segunda-feira', description: 'Véspera de Ano Novo', classification: 'Não é feriado', daydescription:'Meio expediente', percentageWorked: '0'},
+]
+
+module.exports = holidays;

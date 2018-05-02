@@ -2,15 +2,19 @@ const httpStatus = require('../../commons/http_status_codes');
 
 const holidaysmock = require('../../mocks/holiday_mock');
 
-
 /*
 *Get all informations for index page
 */
-function getIndexInformations(event, context, callback) {
+function getIndexData(event, context, callback) {
     const response = {
         statusCode: httpStatus.Ok,
-        body: {},
-    }
+        body: {
+            year: new Date().getFullYear(),
+            holidays: holidaysmock
+        },
+    };
+
+    callback(null, response);
 }
 
 /**

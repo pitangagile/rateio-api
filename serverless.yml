@@ -84,5 +84,13 @@ functions:
           method: get
           cors: true
 
+  getHolidaysIndexData:
+    handler: functions/holiday/handler.getIndexData
+    events:
+      - http:
+          path: api/getHolidaysIndexData
+          method: get
+          cors: true
+
 custom:
   env: dev
