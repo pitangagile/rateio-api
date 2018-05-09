@@ -3,7 +3,7 @@ const errors = require('../../commons/errors');
 const co = require('co');
 const connectToDatabase = require('../../commons/database');
 
-const holidaySchema = require('../../models/holiday');
+const HolidaySchema = require('../../models/holiday');
 
 /**
  * Busca todas as informações necessárias para carregar a página inicial de feriados
@@ -13,7 +13,7 @@ const holidaySchema = require('../../models/holiday');
 function getIndexData(request, response) {
     const years = ['2018', '2017'];
 
-    response.send({years: years});
+    response.send({ years: years });
 }
 
 /**
@@ -23,10 +23,33 @@ function getIndexData(request, response) {
  */
 function getAll(req, res) {
     connectToDatabase()
-    .then(() => {
-        co(function*() {
-            let holidays = yield holidaySchema.find();
-            res.send("Resultado: " + holidays);
+        .then(() => {
+            co(function* () {
+                let holidays = yield HolidaySchema.find();
+                res.send("Resultado: " + holidays);
+            }).catch((error) => {
+                res.send('Erro:' + error);
+            });
+        });
+}
+
+/**
+ * Creates a new Holiday
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function create(req, res) {
+    connectToDatabase().then(() => {
+        co(function* () {
+            let newHoliday = new HolidaySchema({
+                date: new Date(),
+                description: 'Natal',
+                classification: 'Nacional',
+                percentageWorked: 0,
+            });
+
+            newHoliday.save();
+            res.status(httpStatus.Ok).end();
         }).catch((error) => {
             res.send('Erro:' + error);
         });
@@ -36,4 +59,5 @@ function getAll(req, res) {
 module.exports = {
     getIndexData,
     getAll,
+    create,
 }

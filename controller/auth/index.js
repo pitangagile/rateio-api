@@ -25,7 +25,6 @@ function regularLogin(request, response) {
  * @param {object} response
  */
 function socialLogin(request, response) {
-  console.log('ASA GAY');
   const user = {username: request.body.username, email: request.body.email };
   const social = {token: request.body.token, issuer: request.body.issuer };
 
