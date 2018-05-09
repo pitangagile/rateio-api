@@ -7,3 +7,4 @@ jspm_packages
 
 # Private
 /config/env.prod.yml
+/mocks

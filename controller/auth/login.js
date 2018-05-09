@@ -70,7 +70,7 @@ function createRateioToken(profile) {
     // keyid: '',
     // mutatePayload: ''
   });
-  
+
   return token;
 }
 
