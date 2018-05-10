@@ -52,5 +52,12 @@ functions:
           path: api/holiday/{proxy+}
           method: ANY
 
+  coastCenters:
+    handler: router/coastcenter.routers
+    events:
+      - http:
+          path: api/coastcenter/{proxy+}
+          method: ANY
+
 custom:
   env: dev
