@@ -14,6 +14,21 @@ function getPostParameters(requestBody){
   }
 }
 
+function getDayOfWeek(date) {
+    const weekday = new Array(7);
+
+    weekday[0] = "Domingo";
+    weekday[1] = "Segunda-feira";
+    weekday[2] = "Terça-feira";
+    weekday[3] = "Quarta-feira";
+    weekday[4] = "Quinta-feira";
+    weekday[5] = "Sexta-feira";
+    weekday[6] = "Sábado";
+
+  return weekday[date.getDay()];
+}
+
 module.exports = {
-  getPostParameters
+  getPostParameters,
+  getDayOfWeek,
 }

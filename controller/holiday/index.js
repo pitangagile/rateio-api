@@ -1,3 +1,4 @@
+const utilities = require('../../commons/utilities');
 const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const co = require('co');
@@ -11,26 +12,44 @@ const HolidaySchema = require('../../models/holiday');
  * @param {object} response
  */
 function getIndexData(request, response) {
-    const years = ['2018', '2017'];
+    const years = ['2018'];
 
     response.send({ years: years });
 }
 
 /**
- * Busca todos os feriados do banco de dados
+ * Search holidays per year
  * @param {object} req
  * @param {object} res
  */
-function getAll(req, res) {
-    connectToDatabase()
-        .then(() => {
-            co(function* () {
-                let holidays = yield HolidaySchema.find();
-                res.send("Resultado: " + holidays);
-            }).catch((error) => {
-                res.send('Erro:' + error);
-            });
+function search(req, res) {
+    const year = req.body.year;
+    console.log('Ano recebido: ' + year);
+    if(year === undefined){
+        res.status(httpStatus.BadRequest).send('Ano não informado!');
+        return;
+    }
+    connectToDatabase().then(() => {
+        co(function* () {
+            let holidays = yield HolidaySchema.find();
+            let result = [];
+            for(var i = 0; i < holidays.length; i += 1) {
+                let holiday = {
+                    day: holidays[i].date.getDate(),
+                    month: holidays[i].date.getMonth(),
+                    dayOfWeek: utilities.getDayOfWeek(holidays[i].date),
+                    description: holidays[i].description,
+                    daydescription: holidays[i].daydescription,
+                    classification: holidays[i].classification,
+                }
+
+                result.push(holiday);
+            }
+            res.json(result);
+        }).catch((error) => {
+            res.send('Erro:' + error);
         });
+    });
 }
 
 /**
@@ -42,13 +61,31 @@ function create(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
             let newHoliday = new HolidaySchema({
-                date: new Date(),
-                description: 'Natal',
-                classification: 'Nacional',
+                date: new Date(req.body.date),
+                description: req.body.description,
+                classification: req.body.classification,
+                daydescription: req.body.daydescription,
                 percentageWorked: 0,
             });
 
             newHoliday.save();
+            res.status(httpStatus.Ok).send("Feriado incluído com sucesso!").end();
+        }).catch((error) => {
+            res.send('Erro:' + error);
+        });
+    });
+}
+
+/**
+ * Delete a holiday
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function delete_post(req, res) {
+    console.log(req.body.id);
+    connectToDatabase().then(() => {
+        co(function* () {
+            const result = yield HolidaySchema.findByIdAndRemove(req.body.id).exec();
             res.status(httpStatus.Ok).end();
         }).catch((error) => {
             res.send('Erro:' + error);
@@ -58,6 +95,7 @@ function create(req, res) {
 
 module.exports = {
     getIndexData,
-    getAll,
+    search,
     create,
+    delete_post,
 }
