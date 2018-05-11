@@ -36,10 +36,34 @@ function create(req, res) {
                 description: req.body.description,
                 isActive: true,
             });
-            newCoastCenter.save();
-            res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
+            newCoastCenter.save().then(() => {
+                res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
+            }).catch(error => {
+                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            });
         }).catch((error) => {
-            res.send('Erro:' + error);
+            res.status(httpStatus.InternalServerError).json({error: error}).end();
+        });
+    });
+}
+
+/**
+ * Edit a Coast Center
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function edit(req, res) {
+    console.log(req.body.id);
+    connectToDatabase().then(() => {
+        co(function* () {
+            const result = yield coastCenterSchema.findByIdAndUpdate(req.body.id, update = {code: req.body.code , description: req.body.description, isActive: true}, {new: true});
+            result.save().then(awdas => {
+                res.status(httpStatus.Ok).send("Centro de custo editado com sucesso!").end();
+            }).catch(error => {
+                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            });
+        }).catch((error) => {
+            res.status(httpStatus.InternalServerError).json({error: error}).end();
         });
     });
 }
@@ -67,5 +91,6 @@ function delete_center(req, res) {
 module.exports = {
     getAll,
     create,
+    edit,
     delete_center,
 }
