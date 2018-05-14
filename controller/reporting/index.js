@@ -17,6 +17,22 @@ function getIndexData(request, response) {
     response.send({ periods: periods });
 }
 
+function create(req, res) {
+    connectToDatabase().then(() => {
+        co(function* () {
+            let newReport = new ReportingSchema({
+                period: req.body.period,
+                costCenter: req.body.costCenter,
+                hours: req.body.hours,
+            });
+            newReport.save();
+            res.status(httpStatus.Ok).send("Reportagem incluída com sucesso!").end();
+        }).catch((error) => {
+            res.send('Erro:' + error);
+        });
+    });
+}
+
 /**
  * Search reportings per date
  * @param {object} req

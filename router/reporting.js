@@ -6,9 +6,9 @@ const reportingsController = require('../controller/reportings');
 const app = express();
 app.use(bodyParser.json());
 
-app.get('/api/reporting', reportingController.getIndexData);
-app.post('/api/reporting/search', reportingController.search);
-app.post('/api/reporting/create', reportingController.create);
+app.get('/api/reportings', reportingController.getIndexData);
+app.post('/api/reportings/search', reportingController.search);
+app.post('/api/reportings/create', reportingController.create);
 
 
 module.exports.routers = serverless(app);
