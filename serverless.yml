@@ -59,5 +59,13 @@ functions:
           path: api/coastcenter/{proxy+}
           method: ANY
 
+  examples:
+    handler: router/examples.routers
+    events:
+      - http:
+          path: /api/examples/{proxy+}
+          method: ANY
+          cors: true
+
 custom:
   env: dev
