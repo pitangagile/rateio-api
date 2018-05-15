@@ -3,8 +3,7 @@ const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const co = require('co');
 const connectToDatabase = require('../../commons/database');
-
-const ReportingSchema = require('../../models/reporting');
+const reportingSchema = require('../../models/reporting');
 
 /**
  * Searches all the info necessary to load the "Reportagem" page
@@ -12,15 +11,20 @@ const ReportingSchema = require('../../models/reporting');
  * @param {object} response
  */
 function getIndexData(request, response) {
-    const periods = ['January/2018','February/2018','March/2018'];
+    const periods = ['January/2018','February/2018','March/2018', 'April/2018'];
 
     response.send({ periods: periods });
 }
 
+/**
+ * Creates a new reporting
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
 function create(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
-            let newReport = new ReportingSchema({
+            let newReport = new reportingSchema({
                 period: req.body.period,
                 costCenter: req.body.costCenter,
                 hours: req.body.hours,
@@ -47,7 +51,7 @@ function search(req, res) {
     }
     connectToDatabase().then(() => {
         co(function* () {
-            let reportings = yield ReportingSchema.find();
+            let reportings = yield reportingSchema.find();
             let result = [];
             for(var i = 0; i < reportings.length; i += 1) {
                 if(reportings[i].period === period){
@@ -74,7 +78,7 @@ function search(req, res) {
 function create(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
-            let newReport = new reportingschema({
+            let newReport = new reportingSchema({
                 period: req.body.date,
                 costCenter: req.body.costCenter,
                 hours: req.body.hours,
@@ -82,6 +86,23 @@ function create(req, res) {
 
             newReport.save();
             res.status(httpStatus.Ok).send("Reportagem incluída com sucesso!").end();
+        }).catch((error) => {
+            res.send('Erro:' + error);
+        });
+    });
+}
+
+/**
+ * Busca todos as reportagens do banco de dados
+ * @param {object} req
+ * @param {object} res
+ */
+function getAll(req, res){
+    connectToDatabase()
+    .then(() => {
+        co(function*() {
+            let reporting = yield reportingSchema.find().exec();
+            res.send(reporting);
         }).catch((error) => {
             res.send('Erro:' + error);
         });
@@ -97,7 +118,7 @@ function delete_post(req, res) {
     console.log(req.body.id);
     connectToDatabase().then(() => {
         co(function* () {
-            const result = yield reportingschema.findByIdAndRemove(req.body.id).exec();
+            const result = yield reportingSchema.findByIdAndRemove(req.body.id).exec();
             res.status(httpStatus.Ok).end();
         }).catch((error) => {
             res.send('Erro:' + error);
@@ -110,4 +131,5 @@ module.exports = {
     search,
     create,
     delete_post,
+    getAll,
 }

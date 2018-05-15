@@ -2,15 +2,14 @@ const mongoose      = require('mongoose');
 const unique        = require('mongoose-unique-validator');
 const validators    = require('mongoose-validators');
 
-var reportingScheme = new mongoose.Schema(
+var reportingSchema = new mongoose.Schema(
     {
-        employee: {type: String },
-        period: {type: String},
+        period: {type: String, required: [true, '{PATH} é um campo obrigatório']},
         costCenter: {type: String, required: [true, '{PATH} é um campo obrigatório']},
-        Hours: {type: Number},
+        Hours: {type: Number, required: [true, '{PATH} é um campo obrigatório']},
     }, {timestamps: true}
 );
 
-reportingScheme.plugin(unique, { message: '{PATH} já cadastrado' });
-reportingScheme.set('collection', 'reporting');
-module.exports = mongoose.models.reporting || mongoose.model('reporting', reportingScheme);
+reportingSchema.plugin(unique, { message: '{PATH} já cadastrado' });
+reportingSchema.set('collection', 'reporting');
+module.exports = mongoose.models.reporting || mongoose.model('reporting', reportingSchema);
