@@ -4,9 +4,9 @@ const validators    = require('mongoose-validators');
 
 var reportingSchema = new mongoose.Schema(
     {
-        period: {type: String, required: [true, '{PATH} é um campo obrigatório']},
-        costCenter: {type: String, required: [true, '{PATH} é um campo obrigatório']},
-        Hours: {type: Number, required: [true, '{PATH} é um campo obrigatório']},
+        period: {type: String},
+        costCenter: {type: String},
+        hours: {type: Number},
     }, {timestamps: true}
 );
 

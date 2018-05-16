@@ -56,7 +56,7 @@ function search(req, res) {
             for(var i = 0; i < reportings.length; i += 1) {
                 if(reportings[i].period === period){
                     let reporting = {
-                        period: reportings[i].date.getDate(),
+                        period: reportings[i].period,
                         costCenter: reportings[i].costCenter,
                         hours: reportings[i].hours,
                     }
@@ -70,6 +70,17 @@ function search(req, res) {
     });
 }
 
+function update(req, res) {
+    connectToDatabase().then(() => {
+        co(function* () {
+            let reporting = yield reportingSchema.findOneAndUpdate({"_id" :  req.body.id}, { $set: { "hours" : req.body.hours } }).exec();
+            res.send(reporting);
+        }).catch((error) => {
+            res.send('Erro:' + error);
+        });
+    })
+}
+
 /**
  * Creates a new Report
  * @param {object} req The Express Request object
@@ -79,7 +90,7 @@ function create(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
             let newReport = new reportingSchema({
-                period: req.body.date,
+                period: req.body.period,
                 costCenter: req.body.costCenter,
                 hours: req.body.hours,
             });
@@ -114,7 +125,7 @@ function getAll(req, res){
  * @param {object} req The Express Request object
  * @param {object} res The Express Response object
  */
-function delete_post(req, res) {
+function deletePost(req, res) {
     console.log(req.body.id);
     connectToDatabase().then(() => {
         co(function* () {
@@ -130,6 +141,7 @@ module.exports = {
     getIndexData,
     search,
     create,
-    delete_post,
+    deletePost,
     getAll,
+    update,
 }
