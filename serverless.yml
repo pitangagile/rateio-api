@@ -67,5 +67,12 @@ functions:
           method: ANY
           cors: true
 
+  period:
+    handler: router/period.routers
+    events:
+      - http:
+          path: /api/period/{proxy+}
+          method: ANY
+
 custom:
   env: dev
