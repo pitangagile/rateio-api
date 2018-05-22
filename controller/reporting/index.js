@@ -11,9 +11,15 @@ const reportingSchema = require('../../models/reporting');
  * @param {object} response
  */
 function getIndexData(request, response) {
-    const periods = ['January/2018','February/2018','March/2018', 'April/2018'];
-
-    response.send({ periods: periods });
+    connectToDatabase().then(() => {
+        co(function* () {
+            let reportings = yield reportingSchema.find();
+            let result = reportings.map(data => data.period);
+            response.json(result);
+        }).catch((error) => {
+            response.send('Erro:' + error);
+        });
+    });
 }
 
 /**
@@ -52,17 +58,7 @@ function search(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
             let reportings = yield reportingSchema.find();
-            let result = [];
-            for(var i = 0; i < reportings.length; i += 1) {
-                if(reportings[i].period === period){
-                    let reporting = {
-                        period: reportings[i].period,
-                        costCenter: reportings[i].costCenter,
-                        hours: reportings[i].hours,
-                    }
-                }
-                result.push(reporting);
-            }
+            let result = reportings.filter(data => data.period === period);
             res.json(result);
         }).catch((error) => {
             res.send('Erro:' + error);
