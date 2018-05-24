@@ -74,5 +74,12 @@ functions:
           path: api/reportings/{proxy+}
           method: ANY
 
+  period:
+    handler: router/period.routers
+    events:
+      - http:
+          path: /api/period/{proxy+}
+          method: ANY
+
 custom:
   env: dev

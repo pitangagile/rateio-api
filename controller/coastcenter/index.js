@@ -20,6 +20,8 @@ function getAll(req, res) {
         }).catch((error) => {
             res.send('Erro:' + error);
         });
+    }).catch((error) => {
+        res.send('Erro:' + error);
     });
 }
 
@@ -53,7 +55,6 @@ function create(req, res) {
  * @param {object} res The Express Response object
  */
 function edit(req, res) {
-    console.log(req.body.id);
     connectToDatabase().then(() => {
         co(function* () {
             const result = yield coastCenterSchema.findByIdAndUpdate(req.body.id, update = {code: req.body.code , description: req.body.description, isActive: true}, {new: true});
@@ -74,17 +75,21 @@ function edit(req, res) {
  * @param {object} res The Express Response object
  */
 function delete_center(req, res) {
-    console.log(req.body.id);
-    connectToDatabase().then(() => {
+    if (!req.body.id) res.send('Erro: object id not specified');
+    else connectToDatabase().then(() => {
         co(function* () {
             const result = yield coastCenterSchema.findById(req.body.id);
             result.isActive = false;
-            result.save();
-            res.status(httpStatus.Ok).end();
-            console.log(result) // eslint-disable-line
+            result.save().then(() => {
+                res.status(httpStatus.Ok).end();
+            }).catch((error) => {
+                res.send('Erro:' + error);
+            });
         }).catch((error) => {
             res.send('Erro:' + error);
         });
+    }).catch((error) => {
+        res.send('Erro:' + error);
     });
 }
 

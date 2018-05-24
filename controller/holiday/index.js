@@ -36,7 +36,8 @@ function search(req, res) {
             for(var i = 0; i < holidays.length; i += 1) {
                 let holiday = {
                     day: holidays[i].date.getDate(),
-                    month: holidays[i].date.getMonth(),
+                    month: holidays[i].date.getMonth() + 1,
+                    year: holidays[i].date.getFullYear(),
                     dayOfWeek: utilities.getDayOfWeek(holidays[i].date),
                     description: holidays[i].description,
                     daydescription: holidays[i].daydescription,
@@ -45,7 +46,7 @@ function search(req, res) {
 
                 result.push(holiday);
             }
-            res.json(result);
+            res.json(holidays);
         }).catch((error) => {
             res.send('Erro:' + error);
         });
@@ -58,18 +59,27 @@ function search(req, res) {
  * @param {object} res The Express Response object
  */
 function create(req, res) {
+    const spltdate = req.body.date.toString().split('-');
+    const year = parseInt(spltdate[0]);
+    const month = parseInt(spltdate[1]) - 1;
+    const day = parseInt(spltdate[2]);
+    console.log("ano:" + year + " mes:" + month + " dia:" + day);
+
     connectToDatabase().then(() => {
         co(function* () {
             let newHoliday = new HolidaySchema({
-                date: new Date(req.body.date),
+                date: new Date(year, month, day),
                 description: req.body.description,
                 classification: req.body.classification,
                 daydescription: req.body.daydescription,
                 percentageWorked: 0,
             });
 
-            newHoliday.save();
-            res.status(httpStatus.Ok).send("Feriado incluído com sucesso!").end();
+            newHoliday.save().then(() => {
+                res.status(httpStatus.Ok).send("Feriado incluído com sucesso!").end()
+            }).catch(error => {
+                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            });
         }).catch((error) => {
             res.send('Erro:' + error);
         });
@@ -93,9 +103,33 @@ function delete_post(req, res) {
     });
 }
 
+/**
+ * Update a holiday
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function update(req, res){
+    connectToDatabase().then(() => {
+        co(function* () {
+            const result = yield HolidaySchema.findByIdAndUpdate(req.body.id,
+                update = {
+                    date: new Date(req.body.date)
+                }, {new: true});
+            result.save().then(success => {
+                res.status(httpStatus.Ok).send("Feriado atualizado com sucesso!").end();
+            }).catch(error => {
+                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            });
+        }).catch((error) => {
+            res.status(httpStatus.InternalServerError).json({error: error}).end();
+        });
+    });
+}
+
 module.exports = {
     getIndexData,
     search,
     create,
     delete_post,
+    update
 }

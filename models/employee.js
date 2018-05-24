@@ -10,7 +10,8 @@ var employeeSchema = new mongoose.Schema(
         displayName: String,
         urlPicture: String,
         isActive: Boolean,
-        dateDeactivation: Date,
+        deactivationDate: Date,
+        costscenters: [{ type : ObjectId, ref: 'coastCenter' }]
     }, {timestamps: true}
 );
 

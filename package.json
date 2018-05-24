@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": ".\\node_modules\\.bin\\serverless offline -s dev",
+    "deploy": ".\\node_modules\\.bin\\serverless deploy",
     "debug:win": "SET SLS_DEBUG=* && node --inspect %USERPROFILE%\\AppData\\Roaming\\npm\\node_modules\\serverless\\bin\\serverless offline -s dev"
   },
   "devDependencies": {
