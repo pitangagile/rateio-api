@@ -57,15 +57,21 @@ function create(req, res) {
 function edit(req, res) {
     connectToDatabase().then(() => {
         co(function* () {
-            const result = yield coastCenterSchema.findByIdAndUpdate(req.body.id, update = {code: req.body.code , description: req.body.description, isActive: true}, {new: true});
-            result.save().then(awdas => {
-                res.status(httpStatus.Ok).send("Centro de custo editado com sucesso!").end();
-            }).catch(error => {
-                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            const result = coastCenterSchema.findById(req.body.id, function(error, result){
+                if(!error){
+                    result.code = req.body.code;
+                    result.description = req.body.description;
+                    result.isActive = true;
+                    result.save(function (error, result){
+                        if(error){
+                            res.status(httpStatus.InternalServerError).json({error: error}).end();
+                        } else {
+                            res.status(httpStatus.Ok).send("Centro de custo editado com sucesso!").end();
+                        }
+                    })
+                }
             });
-        }).catch((error) => {
-            res.status(httpStatus.InternalServerError).json({error: error}).end();
-        });
+        })
     });
 }
 

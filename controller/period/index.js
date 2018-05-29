@@ -5,6 +5,7 @@ const co = require('co');
 const connectToDatabase = require('../../commons/database');
 const moment = require('moment')
 const periodSchema = require('../../models/period');
+
 /**
  * Busca todos os periodo do banco de dados
  * @param {object} req
@@ -51,19 +52,19 @@ function create(req, res) {
     const finalyear = parseInt(finalspltdate[2]);
     const finalmonth = parseInt(finalspltdate[1] - 1);
     const finalday = parseInt(finalspltdate[0]);
-    console.log(initialspltdate ,finalspltdate);
+
+    const descriptionUpperCase = moment(req.body.description).locale('pt-BR').format('MMMM/YYYY')
 
     connectToDatabase().then(() => {
         co(function* () {
             let newperiod = new periodSchema({
-                description:  moment(req.body.description).locale('pt').format('MMMM/YYYY'),
+                description:  descriptionUpperCase.charAt(0).toUpperCase() + descriptionUpperCase.slice(1) ,
                 initialdate: new Date(initialyear, initialmonth, initialday),
                 finaldate: new Date(finalyear, finalmonth, finalday),
                 closuredate: null,
                 generationdate: null,
                 isActive: true,
             });
-            console.log(newperiod);
             newperiod.save().then(() => {
                 res.status(httpStatus.Ok).send("Periodo incluído com sucesso!").end();
             }).catch(error => {
@@ -111,7 +112,6 @@ function closureDate(req, res) {
     else connectToDatabase().then(() => {
         co(function* () {
             const result = yield periodSchema.findByIdAndUpdate(req.body.id, update = {closuredate: closureDateRegister , isActive: true}, {new: true});
-            console.log(result);
             result.save().then(awdas => {
                 res.status(httpStatus.Ok).end();
             }).catch((error) => {
@@ -123,9 +123,35 @@ function closureDate(req, res) {
     });
 }
 
+/**
+ * Close a Period
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function generationDate(req, res) {
+    const generationpltdate = req.body.generationdate.split(' ');
+    const generationDateRegister = new Date(parseInt(generationpltdate[2]), parseInt(generationpltdate[1] - 1), parseInt(generationpltdate[0]) );
+
+    if (!req.body.id) res.send('Erro: object id not specified');
+    else connectToDatabase().then(() => {
+        co(function* () {
+            const result = yield periodSchema.findByIdAndUpdate(req.body.id, update = {generationdate: generationDateRegister , isActive: true}, {new: true});
+            result.save().then(awdas => {
+                res.status(httpStatus.Ok).end();
+            }).catch((error) => {
+                res.send('Erro:' + error);
+            });
+        }).catch((error) => {
+            res.send('Erro:' + error);
+        });
+    });
+}
+
+
 module.exports = {
     getAll,
     create,
     delete_period,
-    closureDate
+    closureDate,
+    generationDate,
 }
