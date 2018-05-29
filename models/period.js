@@ -4,6 +4,7 @@ const validators    = require('mongoose-validators');
 
 var periodSchema = new mongoose.Schema(
     {
+       description:{type: String, required: [true, '{PATH} é um campo obrigatório']},
        initialdate:{type: Date, required: [true, '{PATH} é um campo obrigatório']},
        finaldate:{type: Date, required: [true, '{PATH} é um campo obrigatório']},
        closuredate: Date,
