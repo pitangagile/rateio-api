@@ -78,28 +78,6 @@ function update(req, res) {
 }
 
 /**
- * Creates a new Report
- * @param {object} req The Express Request object
- * @param {object} res The Express Response object
- */
-function create(req, res) {
-    connectToDatabase().then(() => {
-        co(function* () {
-            let newReport = new reportingSchema({
-                period: req.body.period,
-                costCenter: req.body.costCenter,
-                hours: req.body.hours,
-            });
-
-            newReport.save();
-            res.status(httpStatus.Ok).send("Reportagem incluída com sucesso!").end();
-        }).catch((error) => {
-            res.send('Erro:' + error);
-        });
-    });
-}
-
-/**
  * Busca todos as reportagens do banco de dados
  * @param {object} req
  * @param {object} res
