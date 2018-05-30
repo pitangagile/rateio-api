@@ -67,6 +67,13 @@ functions:
           method: ANY
           cors: true
 
+  reportings:
+    handler: router/reporting.routers
+    events:
+      - http:
+          path: api/reportings/{proxy+}
+          method: ANY
+
   period:
     handler: router/period.routers
     events:
