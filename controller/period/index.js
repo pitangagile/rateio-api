@@ -53,7 +53,7 @@ function create(req, res) {
     const finalmonth = parseInt(finalspltdate[1] - 1);
     const finalday = parseInt(finalspltdate[0]);
 
-    const descriptionUpperCase = moment(req.body.description).locale('pt-BR').format('MMMM/YYYY')
+    const descriptionUpperCase = moment(req.body.description).locale('pt-BR').format('MMMM/YYYY');
 
     connectToDatabase().then(() => {
         co(function* () {
