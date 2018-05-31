@@ -99,9 +99,40 @@ function delete_center(req, res) {
     });
 }
 
+/**
+ * Create all coast center (initial load)
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function createall(req, res){
+    if(req.body != undefined && req.body.length > 0){
+        console.log('Entrou para carga');
+        for(var i = 0; i < req.body.length; i += 1) {
+            console.log('coast center:' + req.body[i].codigo + ' - ' + req.body[i].descricao);
+            co(function* () {
+                let newCoastCenter = new coastCenterSchema({
+                    code: req.body[i].codigo,
+                    description: req.body[i].descricao,
+                    isActive: true,
+                });
+                newCoastCenter.save().then(() => {
+                    res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
+                }).catch(error => {
+                    res.status(httpStatus.InternalServerError).json({error: error}).end();
+                });
+            }).catch((error) => {
+                res.status(httpStatus.InternalServerError).json({error: error}).end();
+            });
+        }
+    }
+
+    res.json(req.body);
+}
+
 module.exports = {
     getAll,
     create,
     edit,
     delete_center,
+    createall,
 }

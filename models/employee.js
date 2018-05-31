@@ -11,7 +11,29 @@ var employeeSchema = new mongoose.Schema(
         urlPicture: String,
         isActive: Boolean,
         deactivationDate: Date,
-        costscenters: [{ type : ObjectId, ref: 'coastCenter' }]
+        login: String,
+        location: String,
+        telstation: String,
+        tel: String,
+        cel: String,
+        telemergency: String,
+        costscenters: [{
+            code:String,
+            description: String
+        }],
+        reportings:[{
+            hours: Number,
+            costcenter: {
+                code:String,
+                description: String
+            },
+            period: {
+                initialdate: Date,
+                finaldate: Date,
+            },
+            isSpecial: Boolean,
+            ManagerName: String
+        }]
     }, {timestamps: true}
 );
 
