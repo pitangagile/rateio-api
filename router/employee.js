@@ -1,12 +1,8 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const serverless = require('serverless-http');
+const router = express.Router();
 const employeeController = require('../controller/employee');
 
-const app = express();
+router.post('/api/employee/createall', employeeController.createall);
+router.get('/api/employee/getall', employeeController.getAll);
 
-app.use(bodyParser.json());
-
-app.post('/api/employee/createall', employeeController.createall);
-
-module.exports.routers = serverless(app);
+module.exports = router;

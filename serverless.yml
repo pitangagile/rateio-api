@@ -15,10 +15,11 @@ service: rateio-api
 
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs8.10
+  stage: dev
   environment:
     # APP
-    APP_NAME: Rateio
+    APP_NAME: rateio
     # JWT
     JWT_PRIVATE_KEY: ${file(./config/env.${self:custom.env}.yml):JWT_PRIVATE_KEY}
     JWT_EXPIRES_IN: ${file(./config/env.${self:custom.env}.yml):JWT_EXPIRES_IN}
@@ -37,56 +38,14 @@ functions:
       - http:
           path: ping
           method: get
-
-  auth:
-    handler: router/auth.routers
+          cors: true
+  api:
+    handler: router/api.routers
     events:
       - http:
-          path: api/auth/{proxy+}
-          method: ANY
-
-  holidays:
-    handler: router/holiday.routers
-    events:
-      - http:
-          path: api/holiday/{proxy+}
-          method: ANY
-
-  coastCenters:
-    handler: router/coastcenter.routers
-    events:
-      - http:
-          path: api/coastcenter/{proxy+}
-          method: ANY
-
-  examples:
-    handler: router/examples.routers
-    events:
-      - http:
-          path: /api/examples/{proxy+}
+          path: api/{proxy+}
           method: ANY
           cors: true
-
-  reportings:
-    handler: router/reporting.routers
-    events:
-      - http:
-          path: api/reportings/{proxy+}
-          method: ANY
-
-  period:
-    handler: router/period.routers
-    events:
-      - http:
-          path: /api/period/{proxy+}
-          method: ANY
-
-  employee:
-    handler: router/employee.routers
-    events:
-      - http:
-          path: api/employee/{proxy+}
-          method: ANY
 
 custom:
   env: dev

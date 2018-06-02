@@ -1,17 +1,12 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const serverless = require('serverless-http');
+const router = express.Router();
 const reportingsController = require('../controller/reporting');
 
-const app = express();
-app.use(bodyParser.json());
+router.get('/api/reportings', reportingsController.getIndexData);
+router.get('/api/reportings/getAll', reportingsController.getAll);
+router.post('/api/reportings/search', reportingsController.search);
+router.post('/api/reportings/create', reportingsController.create);
+router.post('/api/reportings/update', reportingsController.update);
+router.post('/api/reportings/deletePost', reportingsController.deletePost);
 
-app.get('/api/reportings', reportingsController.getIndexData);
-app.get('/api/reportings/getAll', reportingsController.getAll);
-app.post('/api/reportings/search', reportingsController.search);
-app.post('/api/reportings/create', reportingsController.create);
-app.post('/api/reportings/update', reportingsController.update);
-app.post('/api/reportings/deletePost', reportingsController.deletePost);
-
-
-module.exports.routers = serverless(app);
+module.exports = router;

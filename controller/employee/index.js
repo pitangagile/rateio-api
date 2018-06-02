@@ -13,38 +13,52 @@ const employeeSchema = require('../../models/employee');
  */
 function createall(req, res){
   if(req.body != undefined && req.body.length > 0){
-      for(var i = 0; i < req.body.length; i += 1) {
-          console.log('employee:' + req.body[i].Nome + ' | '
-                                  + req.body[i].email + ' | '
-                                  + req.body[i].conhecido + ' | '
-                                  + req.body[i].Ramal + ' | '
-                                  + req.body[i].Celular + ' | '
-                                  + req.body[i].Telefone + ' | '
-                                  + req.body[i].contatoNecessidade + ' | ');
-          // co(function* () {
-          //     let employee = new employeeSchema({
-          //         name: req.body[i].Nome,
-          //         email: req.body[i].email,
-          //         displayName: req.body[i].conhecido,
-          //         telstation: req.body[i].Ramal,
-          //         cel: req.body[i].Celular,
-          //         tel: req.body[i].Telefone,
-          //         telemergency: req.body[i].contatoNecessidade,
-          //         isActive: true,
-          //     });
-          //     employee.save().then(() => {
-          //         res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
-          //     }).catch(error => {
-          //         res.status(httpStatus.InternalServerError).json({error: error}).end();
-          //     });
-          // }).catch((error) => {
-          //     res.status(httpStatus.InternalServerError).json({error: error}).end();
-          // });
-      }
+    connectToDatabase().then(() => {
+      co(function* () {
+        for(var i = 0; i < req.body.length; i += 1) {
+          let employee = new employeeSchema({
+            name: req.body[i].Nome,
+            email: req.body[i].email,
+            displayName: req.body[i].conhecido,
+            telstation: req.body[i].Ramal,
+            cel: req.body[i].Celular,
+            tel: req.body[i].Telefone,
+            telemergency: req.body[i].contatoNecessidade,
+            isActive: true,
+          });
+          employee.save(function (err){
+            res.status(httpStatus.InternalServerError).json({error: error}).end();
+          });
+          res.status(httpStatus.Ok).send("Funcionário cadastrado com sucesso!").end();
+        }
+      }).catch((error) => {
+        res.status(httpStatus.InternalServerError).json({'error': error}).end();
+      });
+    });
   }
-  res.json(req.body);
+  res.json('Fim da carga de dados');
+}
+
+/**
+ * Get all employees
+ * @param {object} req The Express Request object
+ * @param {object} res The Express Response object
+ */
+function getAll(req, res) {
+  connectToDatabase()
+  .then(() => {
+      co(function*() {
+          let employees = yield employeeSchema.find().exec();
+          res.send(employees);
+      }).catch((error) => {
+          res.send('Erro:' + error);
+      });
+  }).catch((error) => {
+      res.send('Erro:' + error);
+  });
 }
 
 module.exports = {
   createall,
+  getAll
 }

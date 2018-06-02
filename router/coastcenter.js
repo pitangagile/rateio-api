@@ -1,15 +1,11 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const serverless = require('serverless-http');
+const router = express.Router();
 const coastCenterController = require('../controller/coastcenter');
 
-const app = express();
-app.use(bodyParser.json());
+router.get('/api/coastcenter/getAll', coastCenterController.getAll);
+router.post('/api/coastcenter/create', coastCenterController.create);
+router.post('/api/coastcenter/delete', coastCenterController.delete_center);
+router.post('/api/coastcenter/edit', coastCenterController.edit);
+router.post('/api/coastcenter/createall', coastCenterController.createall);
 
-app.get('/api/coastcenter/getAll', coastCenterController.getAll);
-app.post('/api/coastcenter/create', coastCenterController.create);
-app.post('/api/coastcenter/delete', coastCenterController.delete_center);
-app.post('/api/coastcenter/edit', coastCenterController.edit);
-app.post('/api/coastcenter/createall', coastCenterController.createall);
-
-module.exports.routers = serverless(app);
+module.exports = router;

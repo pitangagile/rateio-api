@@ -1,14 +1,11 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const serverless = require('serverless-http');
+const router = express.Router();
+
 const authController = require('../controller/auth');
 
-const app = express();
-app.use(bodyParser.json());
+router.post('/api/auth/regularLogin', authController.regularLogin);
+router.post('/api/auth/refreshToken', authController.refreshToken);
+router.post('/api/auth/socialLogin', authController.socialLogin);
+router.post('/api/auth/validate', authController.validate);
 
-app.post('/api/auth/regularLogin', authController.regularLogin);
-app.post('/api/auth/refreshToken', authController.refreshToken);
-app.post('/api/auth/socialLogin', authController.socialLogin);
-app.post('/api/auth/validate', authController.validate);
-
-module.exports.routers = serverless(app);
+module.exports = router;
