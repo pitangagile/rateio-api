@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const coastCenterController = require('../controller/coastcenter');
 
-router.get('/api/coastcenter/getAll', coastCenterController.getAll);
-router.post('/api/coastcenter/create', coastCenterController.create);
-router.post('/api/coastcenter/delete', coastCenterController.delete_center);
-router.post('/api/coastcenter/edit', coastCenterController.edit);
+const coastCenter = require('../models/coastcenter');
+const coastCenterController = require('../controller/coastcenter')(coastCenter);
+
+router.get('/api/coastcenter', coastCenterController.getAll);
+router.post('/api/coastcenter', coastCenterController.create);
+router.put('/api/coastcenter', coastCenterController.update);
+router.delete('/api/coastcenter', coastCenterController.delete_center);
+
 router.post('/api/coastcenter/createall', coastCenterController.createall);
 
 module.exports = router;

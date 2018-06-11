@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const employeeController = require('../controller/employee');
 
-router.post('/api/employee/createall', employeeController.createall);
-router.get('/api/employee/getall', employeeController.getAll);
+const employeeSchema = require('../models/employee');
+const employeeController = require('../controller/employee')(employeeSchema);
+
+router.get('/api/employee', employeeController.getAll);
+router.post('/api/employee', employeeController.create);
+router.delete('/api/employee', employeeController.delete);
 
 module.exports = router;

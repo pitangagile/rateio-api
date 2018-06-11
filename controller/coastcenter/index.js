@@ -1,138 +1,148 @@
 const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
-const co = require('co');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
 
-const coastCenterSchema = require('../../models/coastcenter');
+var coastController = function (coastCenterSchema) {
+    /**
+     * Busca todos os centros de custo do banco de dados
+     * @param {object} req
+     * @param {object} res
+     */
+    async function getAll(req, res) {
+        try {
+            await connectToDatabase();
+            let items = await coastCenterSchema.find({isActive: true}).exec();
+            res.status(httpStatus.Ok).json(items);
+        } catch(e) {
+            res.status(httpStatus.InternalServerError);
+            res.send('Erro:' + e);
+        }
+    }
 
-/**
- * Busca todos os centros de custo do banco de dados
- * @param {object} req
- * @param {object} res
- */
-function getAll(req, res) {
-    connectToDatabase()
-    .then(() => {
-        co(function*() {
-            let coastCenters = yield coastCenterSchema.find({isActive: true}).exec();
-            res.send(coastCenters);
-        }).catch((error) => {
-            res.send('Erro:' + error);
-        });
-    }).catch((error) => {
-        res.send('Erro:' + error);
-    });
-}
+    /**
+     * Creates a new Coast Center
+     * @param {object} req The Express Request object
+     * @param {object} res The Express Response object
+     */
+    async function create(req, res) {
+        try{
+            await connectToDatabase();
+            let newCoastCenter = new coastCenterSchema(req.body);
+            newCoastCenter.isActive = true;
 
-/**
- * Creates a new Coast Center
- * @param {object} req The Express Request object
- * @param {object} res The Express Response object
- */
-function create(req, res) {
-    connectToDatabase().then(() => {
-        co(function* () {
-            let newCoastCenter = new coastCenterSchema({
-                code: req.body.code,
-                description: req.body.description,
-                isActive: true,
-            });
-            newCoastCenter.save().then(() => {
-                res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
-            }).catch(error => {
-                res.status(httpStatus.InternalServerError).json({error: error}).end();
-            });
-        }).catch((error) => {
-            res.status(httpStatus.InternalServerError).json({error: error}).end();
-        });
-    });
-}
+            newCoastCenter.save(function (err) {
+                if(err) {
+                    res.status(httpStatus.InternalServerError).send('Erro:' + err);
+                }
+                else{
+                    res.status(httpStatus.Created).end();
+                }
+            })
+        }catch(e){
+            res.status(httpStatus.InternalServerError).send('Erro:' + e);
+        }
+    }
 
-/**
- * Edit a Coast Center
- * @param {object} req The Express Request object
- * @param {object} res The Express Response object
- */
-function edit(req, res) {
-    connectToDatabase().then(() => {
-        co(function* () {
-            const result = coastCenterSchema.findById(req.body.id, function(error, result){
-                if(!error){
-                    result.code = req.body.code;
-                    result.description = req.body.description;
-                    result.isActive = true;
-                    result.save(function (error, result){
-                        if(error){
-                            res.status(httpStatus.InternalServerError).json({error: error}).end();
-                        } else {
-                            res.status(httpStatus.Ok).send("Centro de custo editado com sucesso!").end();
+    /**
+     * Edit a Coast Center
+     * @param {object} req The Express Request object
+     * @param {object} res The Express Response object
+     */
+    async function edit(req, res) {
+        try{
+            await connectToDatabase();
+            coastCenterSchema.findById(req.body.id, function(err, entity){
+                if(err) {
+                    res.status(httpStatus.NotFound).send('Centro de custo não encontrado');
+                }
+                else {
+                    entity.code = req.body.code;
+                    entity.description = req.body.description;
+                    entity.isActive = true;
+
+                    entity.save(function (err) {
+                        if(err) {
+                            res.status(httpStatus.InternalServerError).send('Falha ao atualizar centro de custo');
+                        }
+                        else {
+                            res.status(httpStatus.Ok).end();
                         }
                     })
                 }
-            });
-        })
-    });
-}
+            })
+        }catch(e){
+            res.status(httpStatus.InternalServerError).send('Falha na edição');
+        }
+    }
 
-/**
- * Delete a Coast Center
- * @param {object} req The Express Request object
- * @param {object} res The Express Response object
- */
-function delete_center(req, res) {
-    if (!req.body.id) res.send('Erro: object id not specified');
-    else connectToDatabase().then(() => {
-        co(function* () {
-            const result = yield coastCenterSchema.findById(req.body.id);
-            result.isActive = false;
-            result.save().then(() => {
-                res.status(httpStatus.Ok).end();
-            }).catch((error) => {
-                res.send('Erro:' + error);
-            });
-        }).catch((error) => {
-            res.send('Erro:' + error);
-        });
-    }).catch((error) => {
-        res.send('Erro:' + error);
-    });
-}
+    /**
+     * Delete a Coast Center
+     * @param {object} req The Express Request object
+     * @param {object} res The Express Response object
+     */
+    async function delete_center(req, res) {
+        try {
+            await connectToDatabase();
+            coastCenterSchema.findById(req.body.id, function (err, entity) {
+                if(err) {
+                    res.status(httpStatus.NotFound).send('Centro de custo não encontrado');
+                }
+                else {
+                    entity.remove(function (err) {
+                        if(err) {
+                            res.status(httpStatus.InternalServerError).send('Falha ao remover o centro de custo informado');
+                        }
+                        else {
+                            res.status(httpStatus.Ok).end();
+                        }
+                    })
+                }
+            })
+        }catch(e) {
+            res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+        }
+    }
 
-/**
- * Create all coast center (initial load)
- * @param {object} req The Express Request object
- * @param {object} res The Express Response object
- */
-function createall(req, res){
-    if(req.body != undefined && req.body.length > 0){
-        console.log('Entrou para carga');
-        for(var i = 0; i < req.body.length; i += 1) {
-            console.log('coast center:' + req.body[i].codigo + ' - ' + req.body[i].descricao);
-            co(function* () {
-                let newCoastCenter = new coastCenterSchema({
+    /**
+     * Create all coast center (initial load)
+     * @param {object} req The Express Request object
+     * @param {object} res The Express Response object
+     */
+    async function createall(req, res){
+        console.log('Executou o criar todos');
+        try {
+            await connectToDatabase();
+            if(req.body == undefined && req.body.length == 0) {
+                res.status(httpStatus.InternalServerError).send('Parâmetros de cadastro inválidos');
+            }
+
+            let saves = [];
+            for(var i = 0; i < req.body.length; i += 1) {
+                let coastCenter = new coastCenterSchema({
                     code: req.body[i].codigo,
                     description: req.body[i].descricao,
                     isActive: true,
                 });
-                newCoastCenter.save().then(() => {
-                    res.status(httpStatus.Ok).send("Centro de custo incluído com sucesso!").end();
-                }).catch(error => {
-                    res.status(httpStatus.InternalServerError).json({error: error}).end();
-                });
-            }).catch((error) => {
-                res.status(httpStatus.InternalServerError).json({error: error}).end();
-            });
+                saves.push(coastCenter.save);
+
+                Promise.all(saves)
+                    .then(() => {console.log('Cadastrou')})
+                    .catch(() => {console.log('Erro ao cadastrar todos os Centros de Custo')});
+            }
+        }catch(e) {
+            res.status(httpStatus.InternalServerError).send('Falha na carga dos Centros');
         }
     }
 
-    res.json(req.body);
+    return {
+        getAll: getAll,
+        create: create,
+        update: edit,
+        delete_center: delete_center,
+        createall: createall
+    }
 }
 
-module.exports = {
-    getAll,
-    create,
-    edit,
-    delete_center,
-    createall,
-}
+
+module.exports = coastController;

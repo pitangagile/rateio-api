@@ -1,10 +1,11 @@
 const mongoose      = require('mongoose');
 const unique        = require('mongoose-unique-validator');
 const validators    = require('mongoose-validators');
+const Schema = mongoose.Schema;
 
 var employeeSchema = new mongoose.Schema(
     {
-        name: {type: Date, required: [true, '{PATH} é um campo obrigatório']},
+        name: {type: String, required: [true, '{PATH} é um campo obrigatório']},
         email: {type:String, required: [true, '{PATH} é um campo obrigatório']},
         idSocialLogin: String,
         displayName: String,
@@ -13,27 +14,12 @@ var employeeSchema = new mongoose.Schema(
         deactivationDate: Date,
         login: String,
         location: String,
-        telstation: String,
+        telStation: String,
         tel: String,
         cel: String,
-        telemergency: String,
-        costscenters: [{
-            code:String,
-            description: String
-        }],
-        reportings:[{
-            hours: Number,
-            costcenter: {
-                code:String,
-                description: String
-            },
-            period: {
-                initialdate: Date,
-                finaldate: Date,
-            },
-            isSpecial: Boolean,
-            ManagerName: String
-        }]
+        telEmergency: String,
+        coastCenterOrigin: { type: Schema.Types.ObjectId, ref: 'coastCenter'},
+        coastCenters: [{ type: Schema.Types.ObjectId, ref: 'coastCenter' }]
     }, {timestamps: true}
 );
 
