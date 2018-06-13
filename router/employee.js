@@ -6,6 +6,7 @@ const employeeController = require('../controller/employee')(employeeSchema);
 
 router.get('/api/employee', employeeController.getAll);
 router.post('/api/employee', employeeController.create);
+router.put('api/employee', employeeController.update);
 router.delete('/api/employee', employeeController.delete);
 
 module.exports = router;

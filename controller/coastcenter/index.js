@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 var coastController = function (coastCenterSchema) {
     /**
-     * Busca todos os centros de custo do banco de dados
+     * Find all active coast centers
      * @param {object} req
      * @param {object} res
      */
@@ -15,8 +15,7 @@ var coastController = function (coastCenterSchema) {
             let items = await coastCenterSchema.find({isActive: true}).exec();
             res.status(httpStatus.Ok).json(items);
         } catch(e) {
-            res.status(httpStatus.InternalServerError);
-            res.send('Erro:' + e);
+            res.status(httpStatus.InternalServerError).send('Erro:' + e);
         }
     }
 

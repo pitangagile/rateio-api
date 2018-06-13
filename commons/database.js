@@ -9,7 +9,7 @@ module.exports = connectToDatabase = () => {
         return Promise.resolve();
     }
 
-    return mongoose.connect(database.connectionString).then(db => {
+    return mongoose.connect(database.connectionString, { autoIndex: false }).then(db => {
         isConnected = db.connections[0].readyState;
     }).catch((error) => {
         res.send('Error to connect database: ' + error);

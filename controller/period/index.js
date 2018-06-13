@@ -23,11 +23,28 @@ var periodController = function(periodSchema) {
                 let period = {
                     _id: items[i]._id,
                     description: items[i].description,
-                    initialdate: moment(items[i].initialdate).format('D/M/YYYY'),
-                    finaldate: moment(items[i].finaldate).format('D/M/YYYY'),
-                    closuredate: moment(items[i].closuredate).format('D/M/YYYY'),
-                    generationdate: moment(items[i].generationdate).format('D/M/YYYY'),
+                    initialDate: moment(items[i].initialDate).format('D/M/YYYY'),
+                    finalDate: moment(items[i].finalDate).format('D/M/YYYY'),
                 }
+                if (items[i].endReportingDate != undefined) {
+                    period.endReportingDate = moment(items[i].endReportingDate).format('D/M/YYYY');
+                }
+                else {
+                    period.endReportingDate = "";
+                }
+                if (items[i].endReportingManagerDate != undefined) {
+                    period.endReportingManagerDate = moment(items[i].endReportingManagerDate).format('D/M/YYYY');
+                }
+                else {
+                    period.endReportingManagerDate = "";
+                }
+                if (items[i].endReportingAdminDate != undefined) {
+                    period.endReportingAdminDate = moment(items[i].endReportingAdminDate).format('D/M/YYYY');
+                }
+                else {
+                    period.endReportingAdminDate = "";
+                }
+
                 result.push(period);
             }
             res.status(httpStatus.Ok).json(result);
@@ -42,36 +59,31 @@ var periodController = function(periodSchema) {
     //  * @param {object} res The Express Response object
     //  */
     async function create(req, res) {
-        const initialspltdate = req.body.initialdate.split(' ');
-        const initialyear = parseInt(initialspltdate[2]);
-        const initialmonth = parseInt(initialspltdate[1] - 1);
-        const initialday = parseInt(initialspltdate[0]);
+        try{
+            const descriptionUpperCase = moment(req.body.finalDate).locale('pt-BR').format('MMMM/YYYY');
 
-        const finalspltdate = req.body.finaldate.split(' ');
-        const finalyear = parseInt(finalspltdate[2]);
-        const finalmonth = parseInt(finalspltdate[1] - 1);
-        const finalday = parseInt(finalspltdate[0]);
+            await connectToDatabase();
+            let newperiod = new periodSchema({
+                description: descriptionUpperCase.charAt(0).toUpperCase() + descriptionUpperCase.slice(1),
+                initialDate: new Date(req.body.initialDate),
+                finalDate: new Date(req.body.finalDate),
+                endReportingDate: undefined,
+                endReportingManagerDate: undefined,
+                endReportingAdminDate: undefined,
+                isActive: true,
+            });
 
-        const descriptionUpperCase = moment(req.body.description).locale('pt-BR').format('MMMM/YYYY');
-
-        await connectToDatabase();
-        let newperiod = new periodSchema({
-            description: descriptionUpperCase.charAt(0).toUpperCase() + descriptionUpperCase.slice(1),
-            initialdate: new Date(initialyear, initialmonth, initialday),
-            finaldate: new Date(finalyear, finalmonth, finalday),
-            closuredate: null,
-            generationdate: null,
-            isActive: true,
-        });
-
-        newperiod.save(function (err) {
-            if(err) {
-                res.status(httpStatus.InternalServerError).res.send('Erro:' + err);
-            }
-            else{
-                res.status(httpStatus.Created).end();
-            }
-        });
+            newperiod.save(function (err) {
+                if(err) {
+                    res.status(httpStatus.InternalServerError).send('Erro:' + err);
+                }
+                else{
+                    res.status(httpStatus.Created).end();
+                }
+            });
+        } catch (e) {
+            res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+        }
     }
 
     // /**
@@ -79,23 +91,27 @@ var periodController = function(periodSchema) {
     //  * @param {object} req The Express Request object
     //  * @param {object} res The Express Response object
     //  */
-    async function delete_period(req, res) {
-        await connectToDatabase();
-        const result = await periodSchema.findByIdAndRemove(req.body.id);
-        result.save(function (err){
-            if(err) {
-                res.status(httpStatus.InternalServerError).send('Erro ao remover período');
-            }
-            else {
-                res.status(httpStatus.Ok).send('Período removido com sucesso');
-            }
-        });
+    async function del(req, res) {
+        try{
+            await connectToDatabase();
+            const result = await periodSchema.findByIdAndRemove(req.body.id);
+            result.save(function (err){
+                if(err) {
+                    res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+                }
+                else {
+                    res.status(httpStatus.Ok).end();
+                }
+            });
+        } catch (e) {
+            res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+        }
     }
 
     return {
         getAll: getAll,
         create: create,
-        delete_period: delete_period
+        delete_period: del
     }
 }
 
