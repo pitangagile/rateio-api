@@ -7,7 +7,7 @@ const coastCenterController = require('../controller/coastcenter')(coastCenter);
 router.get('/api/coastcenter', coastCenterController.getAll);
 router.post('/api/coastcenter', coastCenterController.create);
 router.put('/api/coastcenter', coastCenterController.update);
-router.delete('/api/coastcenter', coastCenterController.delete_center);
+router.delete('/api/coastcenter/:id', coastCenterController.delete_center);
 
 router.post('/api/coastcenter/createall', coastCenterController.createall);
 

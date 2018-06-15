@@ -83,7 +83,7 @@ var coastController = function (coastCenterSchema) {
     async function delete_center(req, res) {
         try {
             await connectToDatabase();
-            coastCenterSchema.findById(req.body.id, function (err, entity) {
+            coastCenterSchema.findById(req.params.id, function (err, entity) {
                 if(err) {
                     res.status(httpStatus.NotFound).send('Centro de custo não encontrado');
                 }
