@@ -1,7 +1,6 @@
 const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
-const mongoose = require('mongoose');
 
 var coastController = function (coastCenterSchema) {
     /**
@@ -11,9 +10,26 @@ var coastController = function (coastCenterSchema) {
      */
     async function getAll(req, res) {
         try {
+            const limit = parseInt(req.query.limit);
+            const page = parseInt(req.query.page);
+
+            const queryFind = { $or:[
+                {"code": { "$regex": req.query.query, "$options": "i" }},
+                {"description": { "$regex": req.query.query, "$options": "i" }}
+            ]};
             await connectToDatabase();
-            let items = await coastCenterSchema.find({isActive: true}).exec();
-            res.status(httpStatus.Ok).json(items);
+            const total = await coastCenterSchema.find(queryFind).count().exec();
+            let items = await coastCenterSchema
+                .find( queryFind )
+                .skip((limit * page) - limit)
+                .limit(limit)
+                .sort({ code:1 })
+                .exec();
+            const result = {
+                data: items,
+                count: total
+            }
+            res.status(httpStatus.Ok).json(result);
         } catch(e) {
             res.status(httpStatus.InternalServerError).send('Erro:' + e);
         }
@@ -90,7 +106,7 @@ var coastController = function (coastCenterSchema) {
                 else {
                     entity.remove(function (err) {
                         if(err) {
-                            res.status(httpStatus.InternalServerError).send('Falha ao remover o centro de custo informado');
+                            res.status(httpStatus.InternalServerError).send('Falha ao remover o centro de custo informado: ' + err);
                         }
                         else {
                             res.status(httpStatus.Ok).end();
@@ -123,12 +139,10 @@ var coastController = function (coastCenterSchema) {
                     description: req.body[i].descricao,
                     isActive: true,
                 });
-                saves.push(coastCenter.save);
-
-                Promise.all(saves)
-                    .then(() => {console.log('Cadastrou')})
-                    .catch(() => {console.log('Erro ao cadastrar todos os Centros de Custo')});
+                console.log('Cadastrando: ' + coastCenter.description);
+                await coastCenter.save();
             }
+            res.status(httpStatus.Ok).send('Centros de custos adicionados con sucesso!');
         }catch(e) {
             res.status(httpStatus.InternalServerError).send('Falha na carga dos Centros');
         }

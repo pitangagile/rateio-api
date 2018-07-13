@@ -7,6 +7,7 @@ var employeeSchema = new mongoose.Schema(
     {
         name: {type: String, required: [true, '{PATH} é um campo obrigatório']},
         email: {type:String, required: [true, '{PATH} é um campo obrigatório']},
+        registration: String,
         idSocialLogin: String,
         displayName: String,
         urlPicture: String,
@@ -18,6 +19,8 @@ var employeeSchema = new mongoose.Schema(
         tel: String,
         cel: String,
         telEmergency: String,
+        workHours: Number,
+        isPj: Boolean,
         coastCenterOrigin: { type: Schema.Types.ObjectId, ref: 'coastCenter'},
         coastCenters: [{ type: Schema.Types.ObjectId, ref: 'coastCenter' }]
     }, {timestamps: true}

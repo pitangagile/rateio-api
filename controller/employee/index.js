@@ -1,12 +1,13 @@
 const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
-const co = require('co');
 const connectToDatabase = require('../../commons/database');
-const mongoose = require('mongoose');
-
-const employeeSchema = require('../../models/employee');
 
 var employeeController = function(employeeSchema) {
+  /**
+  * Get all employees in database
+  * @param {object} req
+  * @param {object} res
+  */
   async function getAll(req, res){
     try {
       await connectToDatabase();
@@ -17,6 +18,34 @@ var employeeController = function(employeeSchema) {
     }
   }
 
+  /**
+  Find to populate grid for interface
+  * @param {object} req
+  * @param {object} res
+  */
+  async function getGridList(req, res) {
+    console.log(req.body);
+    try {
+      await connectToDatabase();
+      let items = await employeeSchema.find({isActive: true})
+        .populate({path:'coastCenterOrigin', select:'description -_id'})
+        .select('name email registration')
+        .exec();
+      const result = {
+        data: items,
+        count: items.length
+      }
+      res.status(httpStatus.Ok).json(result);
+    } catch(e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  /**
+  Create a new employee
+  * @param {object} req
+  * @param {object} res
+  */
   async function create(req, res) {
     try {
       await connectToDatabase();
@@ -36,10 +65,15 @@ var employeeController = function(employeeSchema) {
     }
   }
 
-  async function delete_employee(req, res) {
+  /**
+  Desactive a employee
+  * @param {object} req
+  * @param {object} res
+  */
+  async function del(req, res) {
     try {
       await connectToDatabase();
-      employeeSchema.findById(req.body.id, function(err, entity) {
+      employeeSchema.findById(req.param.id, function(err, entity) {
         if(err) {
           res.status(httpStatus.NotFound).send('Funcionário não encontrado');
         }
@@ -59,6 +93,11 @@ var employeeController = function(employeeSchema) {
     }
   }
 
+  /**
+  Edit a employee from settings
+  * @param {object} req
+  * @param {object} res
+  */
   async function edit (req, res) {
     try {
       await connectToDatabase();
@@ -88,8 +127,9 @@ var employeeController = function(employeeSchema) {
 
   return {
     getAll: getAll,
+    getGridList: getGridList,
     create: create,
-    delete: delete_employee,
+    delete: del,
     update: edit
   }
 }

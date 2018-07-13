@@ -3,7 +3,7 @@ const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const co = require('co');
 const connectToDatabase = require('../../commons/database');
-const moment = require('moment')
+const moment = require('moment-timezone');
 
 var periodController = function(periodSchema) {
         /**
@@ -65,8 +65,8 @@ var periodController = function(periodSchema) {
             await connectToDatabase();
             let newperiod = new periodSchema({
                 description: descriptionUpperCase.charAt(0).toUpperCase() + descriptionUpperCase.slice(1),
-                initialDate: new Date(req.body.initialDate),
-                finalDate: new Date(req.body.finalDate),
+                initialDate: moment(req.body.initialDate).tz('America/Recife').toDate(),
+                finalDate: moment(req.body.finalDate).tz('America/Recife').toDate(),
                 endReportingDate: undefined,
                 endReportingManagerDate: undefined,
                 endReportingAdminDate: undefined,
@@ -94,7 +94,7 @@ var periodController = function(periodSchema) {
     async function del(req, res) {
         try{
             await connectToDatabase();
-            const result = await periodSchema.findByIdAndRemove(req.body.id);
+            const result = await periodSchema.findByIdAndRemove(req.params.id);
             result.save(function (err){
                 if(err) {
                     res.status(httpStatus.InternalServerError).send('Erro: ' + err);
@@ -108,10 +108,21 @@ var periodController = function(periodSchema) {
         }
     }
 
+    async function test(req, res) {
+        try {
+            const dateOrignal = new Date(req.body.datetest);
+            const date = moment(req.body.datetest).tz('America/Recife').toDate();
+            res.send({originaldate: dateOrignal.toJSON(), dateMoment: date.toJSON()});
+        } catch (e) {
+            res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+        }
+    }
+
     return {
         getAll: getAll,
         create: create,
-        delete_period: del
+        delete_period: del,
+        test: test
     }
 }
 

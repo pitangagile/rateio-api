@@ -7,7 +7,7 @@ var holidaySchema = new mongoose.Schema(
         date: {type: Date, required: [true, '{PATH} é um campo obrigatório']},
         description: {type:String, required: [true, '{PATH} é um campo obrigatório']},
         classification: String,
-        daydescription: String,
+        dayDescription: String,
         percentageWorked: {type:Number, required: [true, '{PATH} é um campo obrigatório']},
     }, {timestamps: true}
 );
