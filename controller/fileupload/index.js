@@ -40,12 +40,11 @@ var fileuploadController = function (fileuploadSchema) {
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
-
-    return {
-      getAll: getAll,
-      create: create
-    }
   }
-}
+  return {
+    getAll: getAll,
+    create: create
+  }
+};
 
 module.exports = fileuploadController;
