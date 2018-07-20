@@ -11,7 +11,17 @@ var employeeController = function(employeeSchema) {
   async function getAll(req, res){
     try {
       await connectToDatabase();
-      let items = await employeeSchema.find({isActive: true}).exec();
+      let total = await employeeSchema.find().exec();
+      let items = await coastCenterSchema
+        .find( queryFind )
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({ code:1 })
+        .exec();
+      const result = {
+        data: items,
+        count: total
+      }
       res.status(httpStatus.Ok).json(items);
     } catch(e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
@@ -26,14 +36,23 @@ var employeeController = function(employeeSchema) {
   async function getGridList(req, res) {
     console.log(req.body);
     try {
+      const limit = parseInt(req.query.limit);
+      const page = parseInt(req.query.page);
+
+      const queryFind = { $or:[
+          {"Nome": { "$regex": req.query.query, "$options": "i" }},
+        ]};
       await connectToDatabase();
-      let items = await employeeSchema.find({isActive: true})
-        .populate({path:'coastCenterOrigin', select:'description -_id'})
-        .select('name email registration')
+      const total = await employeeSchema.find(queryFind).count().exec();
+      let items = await employeeSchema
+        .find( queryFind )
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({ code:1 })
         .exec();
       const result = {
         data: items,
-        count: items.length
+        count: total
       }
       res.status(httpStatus.Ok).json(result);
     } catch(e) {
