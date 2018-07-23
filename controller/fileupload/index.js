@@ -19,31 +19,6 @@ var fileuploadController = function (fileuploadSchema) {
   }
 
   /**
-   Create a new fileupload
-   * @param {object} req
-   * @param {object} res
-   */
-  async function create(req, res) {
-    try {
-      await connectToDatabase();
-      let newfileupload = new fileuploadSchema(req.body);
-      console.log(newfileupload)
-      newfileupload.isActive = true;
-
-      newfileupload.save(function (err) {
-        if (err) {
-          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-        }
-        else {
-          res.status(httpStatus.Created).end();
-        }
-      });
-    } catch (e) {
-      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
-    }
-  }
-
-  /**
    Find to populate grid for interface
    * @param {object} req
    * @param {object} res
@@ -69,6 +44,31 @@ var fileuploadController = function (fileuploadSchema) {
       res.status(httpStatus.Ok).json(result);
     } catch(e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  /**
+   Create a new fileupload
+   * @param {object} req
+   * @param {object} res
+   */
+  async function create(req, res) {
+    try {
+      await connectToDatabase();
+
+      let newfileupload = new fileuploadSchema({name: req.file.originalname, responsable: 'Glauber Camelo', data: req.file.buffer});
+      newfileupload.isActive = true;
+
+      newfileupload.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Created).end();
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
 
