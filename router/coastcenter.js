@@ -9,6 +9,8 @@ router.post('/api/coastcenter', coastCenterController.create);
 router.put('/api/coastcenter', coastCenterController.update);
 router.delete('/api/coastcenter/:id', coastCenterController.delete_center);
 
+router.get('/api/coastcenter/getById', coastCenterController.getById);
+
 router.post('/api/coastcenter/createall', coastCenterController.createall);
 
 module.exports = router;

@@ -7,7 +7,7 @@ var fileuploadSchema = new mongoose.Schema(
   {
     name: {type: String, required: [true, '{PATH} é um campo obrigatório'], unique: true},
     responsable: {type: String},
-    data: {type: Buffer},
+    file: {data: {type: Buffer}, contentType: {type:String}},
   }, {timestamps: true}
 );
 

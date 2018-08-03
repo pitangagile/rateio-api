@@ -3,6 +3,7 @@ const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 
 var fileuploadController = function (fileuploadSchema) {
+
   /**
    * Get all files in database
    * @param {object} req
@@ -24,7 +25,6 @@ var fileuploadController = function (fileuploadSchema) {
    * @param {object} res
    */
   async function getGridList(req, res) {
-    console.log(req.body);
     try {
       const limit = parseInt(req.query.limit);
       const page = parseInt(req.query.page);
@@ -35,14 +35,15 @@ var fileuploadController = function (fileuploadSchema) {
         .find()
         .skip((limit * page) - limit)
         .limit(limit)
-        .sort({ code:1 })
+        .sort({code: 1})
         .exec();
       const result = {
         data: items,
         count: total
       }
+      console.log('data > ', result.data);
       res.status(httpStatus.Ok).json(result);
-    } catch(e) {
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
@@ -56,7 +57,12 @@ var fileuploadController = function (fileuploadSchema) {
     try {
       await connectToDatabase();
 
-      let newfileupload = new fileuploadSchema({name: req.file.originalname, responsable: 'Glauber Camelo', data: req.file.buffer});
+      let newfileupload = new fileuploadSchema({
+        name: req.body.name,
+        responsable: req.body.responsable,
+        'file.data': req.file.buffer,
+        'file.contentType': req.file.mimetype
+      });
       newfileupload.isActive = true;
 
       newfileupload.save(function (err) {
@@ -72,10 +78,32 @@ var fileuploadController = function (fileuploadSchema) {
     }
   }
 
+  /**
+   * Get a file in database
+   * @param {object} req
+   * @param {object} res
+   */
+  async function getById(req, res) {
+    try {
+      await connectToDatabase();
+      let ID = req.query['ID'];
+      let item = await fileuploadSchema.find({'_id': ID}).exec();
+      res.set(
+        {
+          'Content-Type': item[0].file.contentType,
+          'Content-Length': item[0].file.data.length,
+        });
+      res.status(httpStatus.Ok).send(new Uint8Array(item[0].file.data));
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     getGridList: getGridList,
-    create: create
+    create: create,
+    getById: getById
   }
 };
 

@@ -7,6 +7,8 @@ const fileuploadController = require('../controller/fileupload')(fileuploadSchem
 
 router.get('/api/fileupload', fileuploadController.getAll);
 router.get('/api/fileupload/gridlist', fileuploadController.getGridList);
-router.post('/api/fileupload', multer().single('data'), fileuploadController.create);
+router.post('/api/fileupload', multer().single('file'), fileuploadController.create);
+router.get('/api/fileupload/getById', fileuploadController.getById);
+
 
 module.exports = router;
