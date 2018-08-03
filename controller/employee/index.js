@@ -95,19 +95,18 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
   async function del(req, res) {
     try {
       await connectToDatabase();
-      employeeSchema.findById(req.param.id, function (err, entity) {
+
+      var employee = await employeeSchema.findById(req.query.user_id).exec();
+
+      console.log('employee > ', employee);
+
+      employee.coastCenters.remove(req.query.coastCenterId);
+      employee.save(function (err) {
         if (err) {
-          res.status(httpStatus.NotFound).send('Funcionário não encontrado');
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }
         else {
-          entity.remove(function (err) {
-            if (err) {
-              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-            }
-            else {
-              res.status(httpStatus.Ok).end();
-            }
-          })
+          res.status(httpStatus.Ok).end();
         }
       });
     } catch (e) {
