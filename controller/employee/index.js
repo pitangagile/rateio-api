@@ -186,11 +186,12 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
 
       var employee = await employeeSchema.findById(req.query.user_id, 'coastCenters').exec();
 
-      let coastCenters = await coastCenterSchema.find({'_id': {$ne: employee.coastCenters.toArray}})
+      let listIdCoastCenters = employee.coastCenters;
+      let notUserCoastCenters = await coastCenterSchema.find({'_id': {$nin : listIdCoastCenters}})
         .sort({code: 1})
         .exec();
 
-      res.status(httpStatus.Ok).send(coastCenters);
+      res.status(httpStatus.Ok).send(notUserCoastCenters);
     } catch
       (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
