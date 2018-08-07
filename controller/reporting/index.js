@@ -48,7 +48,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       let total = await reportingSchema.find(queryFind).count().exec();
 
-      let items = await reportingSchema.find(queryFind).
+      let items = await reportingSchema.find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({code: 1})

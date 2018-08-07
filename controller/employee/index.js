@@ -14,7 +14,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       await connectToDatabase();
       let total = await employeeSchema.find().exec();
       let items = await costCenterSchema
-        .find(queryFind)
+        .find()
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({code: 1})
