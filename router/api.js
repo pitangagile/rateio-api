@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const authRouter = require('./auth');
-const coastcenterRouter = require('./coastcenter');
+const costcenterRouter = require('./costcenter');
 const employeeRouter = require('./employee');
 const holidayRouter = require('./holiday');
 const periodRouter = require('./period');
@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.use(authRouter);
-app.use(coastcenterRouter);
+app.use(costcenterRouter);
 app.use(employeeRouter);
 app.use(holidayRouter);
 app.use(periodRouter);

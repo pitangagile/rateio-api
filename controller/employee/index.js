@@ -3,7 +3,7 @@ const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
 
-var employeeController = function (employeeSchema, coastCenterSchema) {
+var employeeController = function (employeeSchema, costCenterSchema) {
   /**
    * Get all employees in database
    * @param {object} req
@@ -13,7 +13,7 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
     try {
       await connectToDatabase();
       let total = await employeeSchema.find().exec();
-      let items = await coastCenterSchema
+      let items = await costCenterSchema
         .find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
@@ -100,7 +100,7 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
 
       console.log('employee > ', employee);
 
-      employee.coastCenters.remove(req.query.coastCenterId);
+      employee.costCenters.remove(req.query.costCenterId);
       employee.save(function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);
@@ -127,7 +127,7 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
           res.status(httpStatus.InternalServerError).send('Funcionário não encontrado');
         }
         else {
-          entity.coastCenters = req.body.coastCenters;
+          entity.costCenters = req.body.costCenters;
           entity.workHours = req.body.workHours;
           entity.isPj = req.body.isPj;
 
@@ -146,7 +146,7 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
     }
   }
 
-  async function findUserCoastCentersByUserId(req, res) {
+  async function findUserCostCentersByUserId(req, res) {
     try {
       await connectToDatabase();
 
@@ -154,13 +154,13 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
       const limit = parseInt(req.query.limit);
       const page = parseInt(req.query.page);
 
-      var employee = await employeeSchema.findById(req.query.user_id, 'coastCenters').exec();
+      var employee = await employeeSchema.findById(req.query.user_id, 'costCenters').exec();
 
       queryFind = {
-        $and: [{'_id': employee.coastCenters}]
+        $and: [{'_id': employee.costCenters}]
       };
 
-      let coastCenters = await coastCenterSchema.find(queryFind)
+      let costCenters = await costCenterSchema.find(queryFind)
         .find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
@@ -168,8 +168,8 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
         .exec();
 
       const result = {
-        data: coastCenters,
-        count: coastCenters.length
+        data: costCenters,
+        count: costCenters.length
       }
 
       res.status(httpStatus.Ok).json(result);
@@ -179,31 +179,31 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
     }
   }
 
-  async function findCoastCentersWithoutUserId(req, res) {
+  async function findCostCentersWithoutUserId(req, res) {
     try {
       await connectToDatabase();
 
-      var employee = await employeeSchema.findById(req.query.user_id, 'coastCenters').exec();
+      var employee = await employeeSchema.findById(req.query.user_id, 'costCenters').exec();
 
-      let listIdCoastCenters = employee.coastCenters;
-      let notUserCoastCenters = await coastCenterSchema.find({'_id': {$nin : listIdCoastCenters}})
+      let listIdCostCenters = employee.costCenters;
+      let notUserCostCenters = await costCenterSchema.find({'_id': {$nin : listIdCostCenters}})
         .sort({code: 1})
         .exec();
 
-      res.status(httpStatus.Ok).send(notUserCoastCenters);
+      res.status(httpStatus.Ok).send(notUserCostCenters);
     } catch
       (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
 
-  async function addCoastCenter(req, res) {
+  async function addCostCenter(req, res) {
     try {
       await connectToDatabase();
 
       var employee = await employeeSchema.findById(req.body.params.user_id).exec();
 
-      employee.coastCenters.push(req.body.params.coastCenter);
+      employee.costCenters.push(req.body.params.costCenter);
       employee.save(function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);
@@ -223,9 +223,9 @@ var employeeController = function (employeeSchema, coastCenterSchema) {
     create: create,
     delete: del,
     update: edit,
-    findUserCoastCentersByUserId: findUserCoastCentersByUserId,
-    findCoastCentersWithoutUserId: findCoastCentersWithoutUserId,
-    addCoastCenter: addCoastCenter
+    findUserCostCentersByUserId: findUserCostCentersByUserId,
+    findCostCentersWithoutUserId: findCostCentersWithoutUserId,
+    addCostCenter: addCostCenter
   }
 }
 

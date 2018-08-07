@@ -21,8 +21,8 @@ var employeeSchema = new mongoose.Schema(
         telEmergency: String,
         workHours: Number,
         isPj: Boolean,
-        coastCenterOrigin: { type: Schema.Types.ObjectId, ref: 'coastCenter'},
-        coastCenters: [{type: Schema.Types.ObjectId, ref: 'coastCenter' }]
+        costCenterOrigin: { type: Schema.Types.ObjectId, ref: 'costCenter'},
+        costCenters: [{type: Schema.Types.ObjectId, ref: 'costCenter' }]
     }, {timestamps: true}
 );
 

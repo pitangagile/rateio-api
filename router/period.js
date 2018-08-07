@@ -6,10 +6,7 @@ const periodController = require('../controller/period')(periodSchema);
 
 router.get('/api/period', periodController.getAll);
 router.post('/api/period', periodController.create);
-//router.put('/api/period', periodController.update);
 router.delete('/api/period/:id', periodController.delete_period);
-// router.post('/api/period/closuredate', periodController.closureDate);
-// router.post('/api/period/generationdate', periodController.generationDate);
-router.post('/api/period/test', periodController.test);
+router.get('/api/period/pickActivePeriod', periodController.pickActivePeriod);
 
 module.exports = router;

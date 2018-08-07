@@ -2,7 +2,7 @@ const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 
-var coastController = function (coastCenterSchema) {
+var coastController = function (costCenterSchema) {
   /**
    * Find all active coast centers
    * @param {object} req
@@ -20,8 +20,8 @@ var coastController = function (coastCenterSchema) {
         ]
       };
       await connectToDatabase();
-      const total = await coastCenterSchema.find(queryFind).count().exec();
-      let items = await coastCenterSchema
+      const total = await costCenterSchema.find(queryFind).count().exec();
+      let items = await costCenterSchema
         .find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
@@ -46,10 +46,10 @@ var coastController = function (coastCenterSchema) {
   async function create(req, res) {
     try {
       await connectToDatabase();
-      let newCoastCenter = new coastCenterSchema(req.body);
-      newCoastCenter.isActive = true;
+      let newCostCenter = new costCenterSchema(req.body);
+      newCostCenter.isActive = true;
 
-      newCoastCenter.save(function (err) {
+      newCostCenter.save(function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro:' + err);
         }
@@ -70,7 +70,7 @@ var coastController = function (coastCenterSchema) {
   async function edit(req, res) {
     try {
       await connectToDatabase();
-      coastCenterSchema.findById(req.body.id, function (err, entity) {
+      costCenterSchema.findById(req.body.id, function (err, entity) {
         if (err) {
           res.status(httpStatus.NotFound).send('Centro de custo não encontrado');
         }
@@ -102,7 +102,7 @@ var coastController = function (coastCenterSchema) {
   async function delete_center(req, res) {
     try {
       await connectToDatabase();
-      coastCenterSchema.findById(req.params.id, function (err, entity) {
+      costCenterSchema.findById(req.params.id, function (err, entity) {
         if (err) {
           res.status(httpStatus.NotFound).send('Centro de custo não encontrado');
         }
@@ -137,13 +137,13 @@ var coastController = function (coastCenterSchema) {
 
       let saves = [];
       for (var i = 0; i < req.body.length; i += 1) {
-        let coastCenter = new coastCenterSchema({
+        let costCenter = new costCenterSchema({
           code: req.body[i].codigo,
           description: req.body[i].descricao,
           isActive: true,
         });
-        console.log('Cadastrando: ' + coastCenter.description);
-        await coastCenter.save();
+        console.log('Cadastrando: ' + costCenter.description);
+        await costCenter.save();
       }
       res.status(httpStatus.Ok).send('Centros de custos adicionados con sucesso!');
     } catch (e) {
@@ -160,7 +160,7 @@ var coastController = function (coastCenterSchema) {
     try {
       await connectToDatabase();
       let ID = req.query['Id'];
-      const items = await coastCenterSchema.find({'_id': ID}).sort({code: 1}).exec();
+      const items = await costCenterSchema.find({'_id': ID}).sort({code: 1}).exec();
       res.status(httpStatus.Ok).json(items);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);

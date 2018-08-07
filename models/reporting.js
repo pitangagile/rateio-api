@@ -5,10 +5,10 @@ const Schema = mongoose.Schema;
 
 var reportingSchema = new mongoose.Schema(
     {
-        hours: Number,
-        employee: { type: Schema.Types.ObjectId, ref: 'employee' },
-        costcenter: { type: Schema.Types.ObjectId, ref: 'coastCenter' },
-        period: { type: Schema.Types.ObjectId, ref: 'period' },
+        hours: {type:Number,required: true},
+        employee: {required: true, type: Schema.Types.ObjectId, ref: 'employee' },
+        costCenter: {required: true, type: Schema.Types.ObjectId, ref: 'costCenter' },
+        period: {required: true, type: Schema.Types.ObjectId, ref: 'period' },
         isSpecial: Boolean,
         ManagerName: String
     }, {timestamps: true}
