@@ -9,6 +9,7 @@ const reportingsController = require('../controller/reporting')
         (reportingSchema, employeeSchema, costCenterSchema);
 
 router.post('/api/reporting', reportingsController.create);
+router.delete('/api/reporting', reportingsController.del);
 router.get('/api/reporting/findReportsByUserId', reportingsController.findReportsByUserId);
 
 module.exports = router;

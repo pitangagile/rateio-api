@@ -33,6 +33,23 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     }
   }
 
+  async function del(req, res) {
+    try {
+      await connectToDatabase();
+
+      await reportingSchema.findByIdAndRemove(req.query._id).exec().then(function (response, err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Ok).end();
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   async function findReportsByUserId(req, res) {
     try {
       await connectToDatabase();
@@ -49,6 +66,8 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       let total = await reportingSchema.find(queryFind).count().exec();
 
       let items = await reportingSchema.find(queryFind)
+        .populate('period')
+        .populate('costCenter')
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({code: 1})
@@ -67,6 +86,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
   return {
     create : create,
+    del: del,
     findReportsByUserId: findReportsByUserId
   }
 }
