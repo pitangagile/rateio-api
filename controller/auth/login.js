@@ -12,7 +12,6 @@ const jwt = require('jsonwebtoken');
 function regularLogin(credencials) {
   return new Promise((resolve, reject) => {
     try {
-      // TODO: validar e obter dados do usuário
       const user = { email: undefined, username: credencials.username /* ... */ };
       const token = createRateioToken({ email: user.username });
 

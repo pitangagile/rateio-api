@@ -6,8 +6,8 @@ const Schema = mongoose.Schema;
 var employeeSchema = new mongoose.Schema(
     {
         name: {type: String, required: [true, '{PATH} é um campo obrigatório']},
-        email: {type:String, required: [true, '{PATH} é um campo obrigatório']},
-        registration: String,
+        email: {type:String, required: [true, '{PATH} é um campo obrigatório'], unique: true},
+        registration: {type: String, required: [true, '{PATH} é um campo obrigatório'], unique: true},
         idSocialLogin: String,
         displayName: String,
         urlPicture: String,

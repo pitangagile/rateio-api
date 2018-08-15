@@ -4,20 +4,20 @@ const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
 
-var reportingController = function (reportingSchema, employeeSchema, costCenterSchema) {
+var reportingController = function (reportingSchema, employeeSchema, costCenterSchema, periodSchema) {
 
   async function create(req, res) {
     try {
       await connectToDatabase();
 
-      const employee =  await employeeSchema.findById(req.body.params.user_id).exec();
+      const employee = await employeeSchema.findById(req.body.params.user_id).exec();
 
       let reporting = await new reportingSchema(
         {
           hours: req.body.params.hours,
           employee: employee,
-          period : req.body.params.period,
-          costCenter : req.body.params.costCenter
+          period: req.body.params.period,
+          costCenter: req.body.params.costCenter
         });
 
       reporting.save(function (err) {
@@ -79,15 +79,61 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       }
 
       res.status(httpStatus.Ok).json(result);
-    } catch(e) {
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function getReportingTotalHoursPerActivePeriodAndByUserId(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema.findById(req.query.user_id).exec();
+      var period = await periodSchema.findOne({'isActive': true}).exec();
+
+      var response = await reportingSchema.aggregate([
+          {
+            $match:
+              {
+                $and: [
+                  {'employee': employee._id},
+                  {'period': period._id}
+                ]
+              }
+          },
+          {
+            $group:
+              {
+                _id: null,
+                totalHoras:
+                  {$sum: "$hours"}
+              },
+          },
+          {
+            $project: {_id: 0, totalHoras: 1}
+          }
+        ]
+      ).then(function (response, err) {
+        if (err)
+          console.log('err > ', err);
+        return response;
+      });
+
+      const result = {
+        data: response[0]
+      }
+
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
 
   return {
-    create : create,
+    create: create,
     del: del,
-    findReportsByUserId: findReportsByUserId
+    findReportsByUserId: findReportsByUserId,
+    getReportingTotalHoursPerActivePeriodAndByUserId: getReportingTotalHoursPerActivePeriodAndByUserId
   }
 }
 

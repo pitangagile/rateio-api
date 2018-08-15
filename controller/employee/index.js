@@ -179,6 +179,27 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     }
   }
 
+  async function findEmployeeByEmail(req, res) {
+    try {
+      await connectToDatabase();
+
+      queryFind = {
+        $and: [{'email': req.query.email}]
+      };
+
+      var employee = await employeeSchema
+        .find(queryFind)
+        .exec();
+
+      console.log('employee > ',employee[0]);
+
+      res.status(httpStatus.Ok).json(employee[0]);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   async function findCostCentersWithoutUserId(req, res) {
     try {
       await connectToDatabase();
@@ -186,7 +207,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       var employee = await employeeSchema.findById(req.query.user_id, 'costCenters').exec();
 
       let listIdCostCenters = employee.costCenters;
-      let notUserCostCenters = await costCenterSchema.find({'_id': {$nin : listIdCostCenters}})
+      let notUserCostCenters = await costCenterSchema.find({'_id': {$nin: listIdCostCenters}})
         .sort({code: 1})
         .exec();
 
@@ -225,6 +246,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     update: edit,
     findUserCostCentersByUserId: findUserCostCentersByUserId,
     findCostCentersWithoutUserId: findCostCentersWithoutUserId,
+    findEmployeeByEmail: findEmployeeByEmail,
     addCostCenter: addCostCenter
   }
 }
