@@ -54,8 +54,10 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     try {
       await connectToDatabase();
 
-      const limit = parseInt(req.query.limit);
-      const page = parseInt(req.query.page);
+      let data = JSON.parse(req.query.data);
+
+      const limit = parseInt(data.limit);
+      const page = parseInt(data.page);
 
       const queryFind = {
         $and: [
@@ -76,7 +78,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       const result = {
         data: items,
         count: total
-      }
+      };
 
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
@@ -105,12 +107,12 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
             $group:
               {
                 _id: null,
-                totalHoras:
+                totalHoursReporting:
                   {$sum: "$hours"}
               },
           },
           {
-            $project: {_id: 0, totalHoras: 1}
+            $project: {_id: 0, totalHoursReporting: 1}
           }
         ]
       ).then(function (response, err) {
@@ -121,7 +123,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       const result = {
         data: response[0]
-      }
+      };
 
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
@@ -129,11 +131,91 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     }
   }
 
+  /**
+   Edit a employee from settings
+   * @param {object} req
+   * @param {object} res
+   */
+  async function edit(req, res) {
+    try {
+      await connectToDatabase();
+      console.log('req > ', req);
+      reportingSchema.findById(req.body._id, function (err, entity) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Reportagem não encontrada');
+        }
+        else {
+          console.log('entity > ', entity);
+          entity.hours = req.body.hours;
+          entity.save(function (err) {
+            if (err) {
+              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+            }
+            else {
+              res.status(httpStatus.Ok).end();
+            }
+          })
+        }
+      })
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findUserCostCenterByUserIdWithoutReportingInPeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      let activePeriod = await periodSchema.find({'isActive': true}).exec();
+
+      let reportingsCcs = await reportingSchema.find({
+        'employee': req.query.user_id,
+        'period': activePeriod
+      }, 'costCenter').populate('costCenter').exec();
+
+      let userCostCenters = await employeeSchema.findById(req.query.user_id)
+        .sort({code: 1})
+        .exec();
+
+      var userIdsCcs = userCostCenters.costCenters;
+      var userIdsCcsObjectId = [];
+      var reportingIdsCcs = [];
+      var idsCcs = [];
+
+      for (var i = 0; i < userIdsCcs.length; i++) {
+        userIdsCcsObjectId.push(userIdsCcs[i].toString());
+      }
+
+      for (var i = 0; i < reportingsCcs.length; i++) {
+        reportingIdsCcs.push(reportingsCcs[i].costCenter._id.toString());
+      }
+
+      for (var i = 0; i < userIdsCcs.length; i++) {
+        var index = reportingIdsCcs.indexOf(userIdsCcsObjectId[i]);
+        if (index < 0) {
+          idsCcs.push(userIdsCcsObjectId[i]);
+        }
+      }
+
+      let response = await costCenterSchema.find({'_id': {$in: idsCcs}}).exec();
+
+      const result = {
+        data: response
+      };
+
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   return {
     create: create,
     del: del,
+    update: edit,
     findReportsByUserId: findReportsByUserId,
-    getReportingTotalHoursPerActivePeriodAndByUserId: getReportingTotalHoursPerActivePeriodAndByUserId
+    getReportingTotalHoursPerActivePeriodAndByUserId: getReportingTotalHoursPerActivePeriodAndByUserId,
+    findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod
   }
 }
 

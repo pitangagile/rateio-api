@@ -7,6 +7,7 @@
     "debug:win": "SET SLS_DEBUG=* && node --inspect %USERPROFILE%\\AppData\\Roaming\\npm\\node_modules\\serverless\\bin\\serverless offline -s dev"
   },
   "devDependencies": {
+    "moment-business-days": "^1.0.6",
     "serverless": "^1.26.1",
     "serverless-offline": "^3.18.0"
   },

@@ -14,8 +14,8 @@ router.delete('/api/employee', employeeController.delete);
 
 router.get('/api/employee/findUserCostCentersByUserId', employeeController.findUserCostCentersByUserId);
 router.get('/api/employee/findCostCentersWithoutUserId', employeeController.findCostCentersWithoutUserId);
-router.get('/api/employee/findEmployeeByEmail', employeeController.findEmployeeByEmail);
-
 router.post('/api/employee/addCostCenter', employeeController.addCostCenter);
+
+router.get('/api/employee/findEmployeeByEmail', employeeController.findEmployeeByEmail);
 
 module.exports = router;

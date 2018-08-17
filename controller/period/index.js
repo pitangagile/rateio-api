@@ -3,9 +3,16 @@ const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const co = require('co');
 const connectToDatabase = require('../../commons/database');
-const moment = require('moment-timezone');
+const moment = require('moment-business-days');
 
-var periodController = function (periodSchema) {
+var periodController = function (periodSchema, holidaySchema) {
+
+  moment.updateLocale('br',
+    {
+      workingWeekdays: [1, 2, 3, 4, 5]
+    }
+  );
+
   /**
    * Get all period in database
    * @param {object} req
@@ -14,105 +21,103 @@ var periodController = function (periodSchema) {
   async function getAll(req, res) {
     try {
       await connectToDatabase();
+
       let items = await periodSchema.find().exec();
-      let result = [];
+      let total = await periodSchema.find().count().exec();
 
-      moment.updateLocale(moment.locale(), {invalidDate: " "});
-
-      for (var i = 0; i < items.length; i += 1) {
-        let period = {
-          _id: items[i]._id,
-          description: items[i].description,
-          initialDate: moment(items[i].initialDate).format('D/M/YYYY'),
-          finalDate: moment(items[i].finalDate).format('D/M/YYYY'),
-        }
-        if (items[i].endReportingDate != undefined) {
-          period.endReportingDate = moment(items[i].endReportingDate).format('D/M/YYYY');
-        }
-        else {
-          period.endReportingDate = "";
-        }
-        if (items[i].endReportingManagerDate != undefined) {
-          period.endReportingManagerDate = moment(items[i].endReportingManagerDate).format('D/M/YYYY');
-        }
-        else {
-          period.endReportingManagerDate = "";
-        }
-        if (items[i].endReportingAdminDate != undefined) {
-          period.endReportingAdminDate = moment(items[i].endReportingAdminDate).format('D/M/YYYY');
-        }
-        else {
-          period.endReportingAdminDate = "";
-        }
-
-        result.push(period);
+      const result = {
+        data: items,
+        coutn: total
       }
+
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
 
-  // /**
-  //  * Creates a new period
-  //  * @param {object} req The Express Request object
-  //  * @param {object} res The Express Response object
-  //  */
-  async function create(req, res) {
-    try {
-      const descriptionUpperCase = moment(req.body.finalDate).locale('pt-BR').format('MMMM/YYYY');
-
-      await connectToDatabase();
-      let newperiod = new periodSchema({
-        description: descriptionUpperCase.charAt(0).toUpperCase() + descriptionUpperCase.slice(1),
-        initialDate: moment(req.body.initialDate).tz('America/Recife').toDate(),
-        finalDate: moment(req.body.finalDate).tz('America/Recife').toDate(),
-        endReportingDate: undefined,
-        endReportingManagerDate: undefined,
-        endReportingAdminDate: undefined,
-        isActive: true,
-      });
-
-      newperiod.save(function (err) {
-        if (err) {
-          res.status(httpStatus.InternalServerError).send('Erro:' + err);
-        }
-        else {
-          res.status(httpStatus.Created).end();
-        }
-      });
-    } catch (e) {
-      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
-    }
-  }
-
-  // /**
-  //  * Delete a Period
-  //  * @param {object} req The Express Request object
-  //  * @param {object} res The Express Response object
-  //  */
-  async function del(req, res) {
-    try {
-      await connectToDatabase();
-      const result = await periodSchema.findByIdAndRemove(req.params.id);
-      result.save(function (err) {
-        if (err) {
-          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-        }
-        else {
-          res.status(httpStatus.Ok).end();
-        }
-      });
-    } catch (e) {
-      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
-    }
-  }
-
   async function pickActivePeriod(req, res) {
     try {
       await connectToDatabase();
-      const result = await periodSchema.findOne({'isActive': true});
+      const result = await periodSchema.findOne({ 'isActive': true });
       res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findTotalDaysActivesPerPeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      var period = await periodSchema.findOne({ 'isActive': true }).exec();
+
+      var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
+      var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0, 5 * await getQtdHalfHolidaysInActivePeriod(period));
+
+      console.log('qtdBusinessDays > ', qtdBusinessDays);
+      console.log('absQtdBusinessDays > ', absQtdBusinessDays);
+
+      const result = {
+        data: absQtdBusinessDays
+      }
+
+      res.status(httpStatus.Ok).json(result);
+
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function getQtdHalfHolidaysInActivePeriod(period) {
+    try {
+      await connectToDatabase();
+
+      const queryFindHalfHolidays = {
+        $and: [
+          { 'percentageWorked': [50] },
+        ],
+        'date': { '$gte': period.initialDate, '$lt': period.finalDate }
+      }
+
+      var halfHolidays = await holidaySchema.find(queryFindHalfHolidays).exec();
+
+      var qtdBusinessDaysAndHalfHolidays = 0;
+
+      for (var i = 0; i < halfHolidays.length; i++) {
+        if (moment(halfHolidays[i].date, 'YYYY-MM-DD').isBusinessDay()) {
+          qtdBusinessDaysAndHalfHolidays += 1;
+        }
+      };
+
+      return qtdBusinessDaysAndHalfHolidays;
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function getQtdFullHolidaysInActivePeriod(period) {
+    try {
+      await connectToDatabase();
+
+      const queryFindFullHolidays = {
+        $and: [
+          { 'percentageWorked': [0] },
+        ],
+        'date': { '$gte': period.initialDate, '$lt': period.finalDate }
+      }
+      var fullHolidays = await holidaySchema.find(queryFindFullHolidays).exec();
+
+      var qtdBusinessDaysAndFullHolidays = 0;
+
+      for (var i = 0; i < fullHolidays.length; i++) {
+        if (moment(fullHolidays[i].date, 'YYYY-MM-DD').isBusinessDay()) {
+          qtdBusinessDaysAndFullHolidays += 1;
+        }
+      };
+
+      return qtdBusinessDaysAndFullHolidays;
+
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
@@ -120,9 +125,8 @@ var periodController = function (periodSchema) {
 
   return {
     getAll: getAll,
-    create: create,
-    delete_period: del,
     pickActivePeriod: pickActivePeriod,
+    findTotalDaysActivesPerPeriod, findTotalDaysActivesPerPeriod
   }
 }
 
