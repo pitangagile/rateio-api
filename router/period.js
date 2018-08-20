@@ -7,6 +7,6 @@ const periodController = require('../controller/period')(periodSchema, holidaySc
 
 router.get('/api/period', periodController.getAll);
 router.get('/api/period/pickActivePeriod', periodController.pickActivePeriod);
-router.get('/api/period/findTotalDaysActivesPerPeriod', periodController.findTotalDaysActivesPerPeriod);
+router.get('/api/period/calculateTotalBusinessDaysByActivePeriod', periodController.calculateTotalBusinessDaysByActivePeriod);
 
 module.exports = router;

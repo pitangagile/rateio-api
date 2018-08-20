@@ -86,7 +86,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     }
   }
 
-  async function getReportingTotalHoursPerActivePeriodAndByUserId(req, res) {
+  async function calculateTotalReportingHoursByUserIdAndPerActivePeriod(req, res) {
     try {
       await connectToDatabase();
 
@@ -107,12 +107,12 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
             $group:
               {
                 _id: null,
-                totalHoursReporting:
+                totalHoursReportingByActivePeriod:
                   {$sum: "$hours"}
               },
           },
           {
-            $project: {_id: 0, totalHoursReporting: 1}
+            $project: {_id: 0, totalHoursReportingByActivePeriod: 1}
           }
         ]
       ).then(function (response, err) {
@@ -214,7 +214,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     del: del,
     update: edit,
     findReportsByUserId: findReportsByUserId,
-    getReportingTotalHoursPerActivePeriodAndByUserId: getReportingTotalHoursPerActivePeriodAndByUserId,
+    calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
     findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod
   }
 }

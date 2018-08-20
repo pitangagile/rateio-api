@@ -13,7 +13,7 @@ router.post('/api/reporting', reportingsController.create);
 router.put('/api/reporting', reportingsController.update);
 router.delete('/api/reporting', reportingsController.del);
 router.get('/api/reporting/findReportsByUserId', reportingsController.findReportsByUserId);
-router.get('/api/reporting/getReportingTotalHoursPerActivePeriodAndByUserId', reportingsController.getReportingTotalHoursPerActivePeriodAndByUserId);
+router.get('/api/reporting/calculateTotalReportingHoursByUserIdAndPerActivePeriod', reportingsController.calculateTotalReportingHoursByUserIdAndPerActivePeriod);
 router.get('/api/reporting/findUserCostCenterByUserIdWithoutReportingInPeriod', reportingsController.findUserCostCenterByUserIdWithoutReportingInPeriod);
 
 module.exports = router;

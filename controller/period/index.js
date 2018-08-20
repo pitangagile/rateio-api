@@ -28,7 +28,7 @@ var periodController = function (periodSchema, holidaySchema) {
       const result = {
         data: items,
         coutn: total
-      }
+      };
 
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
@@ -39,28 +39,31 @@ var periodController = function (periodSchema, holidaySchema) {
   async function pickActivePeriod(req, res) {
     try {
       await connectToDatabase();
-      const result = await periodSchema.findOne({ 'isActive': true });
+
+      const item = await periodSchema.findOne({ 'isActive': true });
+
+      const result = {
+        data : item
+      };
+
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
 
-  async function findTotalDaysActivesPerPeriod(req, res) {
+  async function calculateTotalBusinessDaysByActivePeriod(req, res) {
     try {
       await connectToDatabase();
 
       var period = await periodSchema.findOne({ 'isActive': true }).exec();
 
       var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
-      var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0, 5 * await getQtdHalfHolidaysInActivePeriod(period));
-
-      console.log('qtdBusinessDays > ', qtdBusinessDays);
-      console.log('absQtdBusinessDays > ', absQtdBusinessDays);
+      var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0.5 * await getQtdHalfHolidaysInActivePeriod(period));
 
       const result = {
         data: absQtdBusinessDays
-      }
+      };
 
       res.status(httpStatus.Ok).json(result);
 
@@ -78,7 +81,7 @@ var periodController = function (periodSchema, holidaySchema) {
           { 'percentageWorked': [50] },
         ],
         'date': { '$gte': period.initialDate, '$lt': period.finalDate }
-      }
+      };
 
       var halfHolidays = await holidaySchema.find(queryFindHalfHolidays).exec();
 
@@ -105,7 +108,7 @@ var periodController = function (periodSchema, holidaySchema) {
           { 'percentageWorked': [0] },
         ],
         'date': { '$gte': period.initialDate, '$lt': period.finalDate }
-      }
+      };
       var fullHolidays = await holidaySchema.find(queryFindFullHolidays).exec();
 
       var qtdBusinessDaysAndFullHolidays = 0;
@@ -126,7 +129,7 @@ var periodController = function (periodSchema, holidaySchema) {
   return {
     getAll: getAll,
     pickActivePeriod: pickActivePeriod,
-    findTotalDaysActivesPerPeriod, findTotalDaysActivesPerPeriod
+    calculateTotalBusinessDaysByActivePeriod, calculateTotalBusinessDaysByActivePeriod,
   }
 }
 
