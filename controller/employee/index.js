@@ -35,7 +35,6 @@ var employeeController = function (employeeSchema, costCenterSchema) {
    * @param {object} res
    */
   async function getGridList(req, res) {
-    console.log(req.body);
     try {
       const limit = parseInt(req.query.limit);
       const page = parseInt(req.query.page);

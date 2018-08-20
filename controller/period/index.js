@@ -22,12 +22,28 @@ var periodController = function (periodSchema, holidaySchema) {
     try {
       await connectToDatabase();
 
-      let items = await periodSchema.find().exec();
-      let total = await periodSchema.find().count().exec();
+      const limit = parseInt(req.query.limit);
+      const page = parseInt(req.query.page);
+
+      const queryFind = {
+        $or: [
+          {"description": {"$regex": req.query.query, "$options": "i"}},
+        ]
+      };
+
+      console.log('req.query.query > ',req.query.query);
+
+      let total = await periodSchema.find(queryFind).count().exec();
+      let items = await periodSchema
+        .find(queryFind)
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({code: 1})
+        .exec();
 
       const result = {
         data: items,
-        coutn: total
+        count: total
       };
 
       res.status(httpStatus.Ok).json(result);
@@ -40,10 +56,10 @@ var periodController = function (periodSchema, holidaySchema) {
     try {
       await connectToDatabase();
 
-      const item = await periodSchema.findOne({ 'isActive': true });
+      const item = await periodSchema.findOne({'isActive': true});
 
       const result = {
-        data : item
+        data: item
       };
 
       res.status(httpStatus.Ok).json(result);
@@ -56,7 +72,7 @@ var periodController = function (periodSchema, holidaySchema) {
     try {
       await connectToDatabase();
 
-      var period = await periodSchema.findOne({ 'isActive': true }).exec();
+      var period = await periodSchema.findOne({'isActive': true}).exec();
 
       var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
       var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0.5 * await getQtdHalfHolidaysInActivePeriod(period));
@@ -78,9 +94,9 @@ var periodController = function (periodSchema, holidaySchema) {
 
       const queryFindHalfHolidays = {
         $and: [
-          { 'percentageWorked': [50] },
+          {'percentageWorked': [50]},
         ],
-        'date': { '$gte': period.initialDate, '$lt': period.finalDate }
+        'date': {'$gte': period.initialDate, '$lt': period.finalDate}
       };
 
       var halfHolidays = await holidaySchema.find(queryFindHalfHolidays).exec();
@@ -91,7 +107,8 @@ var periodController = function (periodSchema, holidaySchema) {
         if (moment(halfHolidays[i].date, 'YYYY-MM-DD').isBusinessDay()) {
           qtdBusinessDaysAndHalfHolidays += 1;
         }
-      };
+      }
+      ;
 
       return qtdBusinessDaysAndHalfHolidays;
     } catch (e) {
@@ -105,9 +122,9 @@ var periodController = function (periodSchema, holidaySchema) {
 
       const queryFindFullHolidays = {
         $and: [
-          { 'percentageWorked': [0] },
+          {'percentageWorked': [0]},
         ],
-        'date': { '$gte': period.initialDate, '$lt': period.finalDate }
+        'date': {'$gte': period.initialDate, '$lt': period.finalDate}
       };
       var fullHolidays = await holidaySchema.find(queryFindFullHolidays).exec();
 
@@ -117,7 +134,8 @@ var periodController = function (periodSchema, holidaySchema) {
         if (moment(fullHolidays[i].date, 'YYYY-MM-DD').isBusinessDay()) {
           qtdBusinessDaysAndFullHolidays += 1;
         }
-      };
+      }
+      ;
 
       return qtdBusinessDaysAndFullHolidays;
 
