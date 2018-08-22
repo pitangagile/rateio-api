@@ -3,21 +3,60 @@ const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
+const moment = require('moment-business-days');
 
 var reportingController = function (reportingSchema, employeeSchema, costCenterSchema, periodSchema) {
+
+  moment.updateLocale('br',
+    {
+      workingWeekdays: [1, 2, 3, 4, 5]
+    }
+  );
+
+  async function findAllByActivePeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      const limit = parseInt(req.query.limit);
+      const page = parseInt(req.query.page);
+
+      let period = await periodSchema.findOne({'isActive': true}).exec();
+
+      let total = await reportingSchema.find({'period': period}).count().exec();
+      let items = await reportingSchema
+        .find({'period': period._id})
+        .populate('employee')
+        .populate('costCenter')
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({code: 1})
+        .exec();
+
+      const result = {
+        data: items,
+        count: total
+      };
+
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
 
   async function create(req, res) {
     try {
       await connectToDatabase();
 
       const employee = await employeeSchema.findById(req.body.params.user_id).exec();
+      const period = await periodSchema.findById(req.body.params.period._id).exec();
+      const costCenter = await costCenterSchema.findById(req.body.params.costCenter._id).exec();
 
       let reporting = await new reportingSchema(
         {
-          hours: req.body.params.hours,
+          period: period,
           employee: employee,
-          period: req.body.params.period,
-          costCenter: req.body.params.costCenter
+          costCenter: costCenter,
+          totalHoursCostCenter: req.body.params.totalHoursCostCenter,
         });
 
       reporting.save(function (err) {
@@ -33,9 +72,48 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     }
   }
 
+  /**
+   Edit a employee from settings
+   * @param {object} req
+   * @param {object} res
+   */
+  async function edit(req, res) {
+    try {
+      await connectToDatabase();
+
+      reportingSchema.findById(req.body._id, function (err, entity) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Reportagem não encontrada');
+        }
+        else {
+          entity.totalHoursCostCenter = req.body.totalHoursCostCenter;
+          entity.save(function (err) {
+            if (err) {
+              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+            }
+            else {
+              res.status(httpStatus.Ok).end();
+            }
+          })
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   async function del(req, res) {
     try {
       await connectToDatabase();
+
+      let reporting = await reportingSchema
+        .findByIdAndRemove(req.query._id)
+        .populate('period')
+        .populate('employee')
+        .exec();
+
+      let employee = await employeeSchema.findById(reporting.employee._id).exec();
+      let period = await periodSchema.findById(reporting.period._id).exec();
 
       await reportingSchema.findByIdAndRemove(req.query._id).exec().then(function (response, err) {
         if (err) {
@@ -108,7 +186,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
               {
                 _id: null,
                 totalHoursReportingByActivePeriod:
-                  {$sum: "$hours"}
+                  {$sum: "$totalHoursCostCenter"}
               },
           },
           {
@@ -121,44 +199,17 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
         return response;
       });
 
+      if (response[0] == undefined) {
+        response[0] = {_id: null, totalHoursReportingByActivePeriod: 0}
+      }
+
       const result = {
-        data: response[0]
+        data: response[0],
       };
 
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
-    }
-  }
-
-  /**
-   Edit a employee from settings
-   * @param {object} req
-   * @param {object} res
-   */
-  async function edit(req, res) {
-    try {
-      await connectToDatabase();
-      console.log('req > ', req);
-      reportingSchema.findById(req.body._id, function (err, entity) {
-        if (err) {
-          res.status(httpStatus.InternalServerError).send('Reportagem não encontrada');
-        }
-        else {
-          console.log('entity > ', entity);
-          entity.hours = req.body.hours;
-          entity.save(function (err) {
-            if (err) {
-              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-            }
-            else {
-              res.status(httpStatus.Ok).end();
-            }
-          })
-        }
-      })
-    } catch (e) {
-      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
 
@@ -210,13 +261,14 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
   }
 
   return {
+    findAllByActivePeriod: findAllByActivePeriod,
     create: create,
     del: del,
     update: edit,
     findReportsByUserId: findReportsByUserId,
     calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
-    findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod
+    findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod,
   }
-}
+};
 
 module.exports = reportingController;

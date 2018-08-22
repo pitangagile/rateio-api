@@ -42,7 +42,6 @@ function socialLogin(request, response) {
  */
 function validate(request, response) {
   const statusCode = authLogin.validateToken(request.body.token) ? httpStatus.Ok : httpStatus.Unauthorized;
-
   response.status(statusCode).end();
 }
 
@@ -64,4 +63,4 @@ module.exports = {
   socialLogin,
   validate,
   refreshToken
-}
+};

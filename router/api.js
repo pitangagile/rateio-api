@@ -10,6 +10,7 @@ const holidayRouter = require('./holiday');
 const periodRouter = require('./period');
 const reportingRouter = require('./reporting');
 const fileuploadRouter = require('./fileupload');
+const manageRouter = require('./manage');
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,5 +23,6 @@ app.use(holidayRouter);
 app.use(periodRouter);
 app.use(reportingRouter);
 app.use(fileuploadRouter);
+app.use(manageRouter);
 
 module.exports.routers = serverless(app);

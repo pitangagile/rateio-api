@@ -14,7 +14,6 @@ function regularLogin(credencials) {
     try {
       const user = { email: undefined, username: credencials.username /* ... */ };
       const token = createRateioToken({ email: user.username });
-
       resolve({user, token});
     } catch (e) {
       reject('AUTH0001');
@@ -33,7 +32,6 @@ function validateWithProvider(email, socialToken) {
     const requestOptions = {
       qs: { access_token: socialToken }
     };
-
     request(variables.social.google.authValidateUri, requestOptions, (error, response, body) => {
       if(!error && response.statusCode == 200){
         let jsonBody = JSON.parse(body);
@@ -130,4 +128,4 @@ module.exports = {
   socialLogin,
   validateToken,
   refreshToken
-}
+};

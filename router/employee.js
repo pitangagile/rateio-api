@@ -9,7 +9,7 @@ const employeeController = require('../controller/employee')(employeeSchema, cos
 router.get('/api/employee', employeeController.getAll);
 router.get('/api/employee/gridlist', employeeController.getGridList);
 router.post('/api/employee', employeeController.create);
-router.put('api/employee', employeeController.update);
+router.put('/api/employee', employeeController.update);
 router.delete('/api/employee', employeeController.delete);
 
 router.get('/api/employee/findUserCostCentersByUserId', employeeController.findUserCostCentersByUserId);

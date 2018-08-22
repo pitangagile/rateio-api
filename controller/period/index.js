@@ -31,7 +31,7 @@ var periodController = function (periodSchema, holidaySchema) {
         ]
       };
 
-      console.log('req.query.query > ',req.query.query);
+      console.log('req.query.query > ', req.query.query);
 
       let total = await periodSchema.find(queryFind).count().exec();
       let items = await periodSchema

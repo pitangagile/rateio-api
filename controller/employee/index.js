@@ -97,8 +97,6 @@ var employeeController = function (employeeSchema, costCenterSchema) {
 
       var employee = await employeeSchema.findById(req.query.user_id).exec();
 
-      console.log('employee > ', employee);
-
       employee.costCenters.remove(req.query.costCenterId);
       employee.save(function (err) {
         if (err) {
@@ -121,25 +119,15 @@ var employeeController = function (employeeSchema, costCenterSchema) {
   async function edit(req, res) {
     try {
       await connectToDatabase();
-      employeeController.findById(req.body.id, function (err, entity) {
-        if (err) {
-          res.status(httpStatus.InternalServerError).send('Funcionário não encontrado');
-        }
-        else {
-          entity.costCenters = req.body.costCenters;
-          entity.workHours = req.body.workHours;
-          entity.isPj = req.body.isPj;
 
-          entity.save(function (err) {
-            if (err) {
-              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-            }
-            else {
-              res.status(httpStatus.Ok).end();
-            }
-          })
+      let employee = await employeeSchema.findById(req.body.params.employee._id).exec();
+
+      await employeeSchema.findByIdAndUpdate(req.body.params.employee._id, req.body.params.employee, function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro ao atualizar colaborador');
         }
-      })
+        res.status(httpStatus.Ok).end();
+      });
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
@@ -169,7 +157,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       const result = {
         data: costCenters,
         count: costCenters.length
-      }
+      };
 
       res.status(httpStatus.Ok).json(result);
     } catch
@@ -189,8 +177,6 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       var employee = await employeeSchema
         .find(queryFind)
         .exec();
-
-      console.log('employee > ',employee[0]);
 
       res.status(httpStatus.Ok).json(employee[0]);
     } catch
