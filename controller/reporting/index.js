@@ -17,27 +17,43 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     try {
       await connectToDatabase();
 
-      const limit = parseInt(req.query.limit);
-      const page = parseInt(req.query.page);
+      let data = JSON.parse(req.query.data);
+
+      const limit = parseInt(data.limit);
+      const page = parseInt(data.page);
 
       let period = await periodSchema.findOne({'isActive': true}).exec();
 
-      let total = await reportingSchema.find({'period': period}).count().exec();
+      const queryFind = {
+        $and: [
+          {'period': period._id},
+        ]
+      };
+
       let items = await reportingSchema
-        .find({'period': period._id})
+        .find(queryFind)
+        .populate('period')
         .populate('employee')
         .populate('costCenter')
         .skip((limit * page) - limit)
         .limit(limit)
-        .sort({code: 1})
+        .sort({'code': 1})
         .exec();
 
-      const result = {
-        data: items,
-        count: total
-      };
-
-      res.status(httpStatus.Ok).json(result);
+      if (items.length > 0) {
+        let response = items.filter(reporting => reporting.employee.name.toLowerCase().match(data.query.toLowerCase()));
+        const result = {
+          data: response,
+          count: response.length
+        };
+        res.status(httpStatus.Ok).json(result);
+      } else {
+        const result = {
+          data: items,
+          count: items.length
+        };
+        res.status(httpStatus.Ok).json(result);
+      }
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }

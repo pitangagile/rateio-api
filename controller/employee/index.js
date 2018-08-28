@@ -50,7 +50,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
         .find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
-        .sort({code: 1})
+        .sort({name: 1})
         .exec();
       const result = {
         data: items,
@@ -120,9 +120,14 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     try {
       await connectToDatabase();
 
-      let employee = await employeeSchema.findById(req.body.params.employee._id).exec();
+      let employeeId = req.body.params.employee._id;
 
-      await employeeSchema.findByIdAndUpdate(req.body.params.employee._id, req.body.params.employee, function (err) {
+      console.log('req > ', req);
+      console.log('employeeId > ', employeeId);
+
+      await employeeSchema.findById(employeeId).exec();
+
+      await employeeSchema.findByIdAndUpdate(employeeId, req.body.params.employee, function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro ao atualizar colaborador');
         }
@@ -223,6 +228,24 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     }
   }
 
+  async function validateAllEmployeesFromSpreadsheet(req, res) {
+    try {
+      await connectToDatabase();
+
+      let registrations = req.query.registrations;
+
+      const queryFind = {
+        'registration' : { $nin : registrations}
+      };
+
+      let employees = await employeeSchema.find(queryFind).select('_id').exec();
+
+      res.status(httpStatus.Ok).json(employees);
+    }catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     getGridList: getGridList,
@@ -232,7 +255,8 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     findUserCostCentersByUserId: findUserCostCentersByUserId,
     findCostCentersWithoutUserId: findCostCentersWithoutUserId,
     findEmployeeByEmail: findEmployeeByEmail,
-    addCostCenter: addCostCenter
+    addCostCenter: addCostCenter,
+    validateAllEmployeesFromSpreadsheet : validateAllEmployeesFromSpreadsheet
   }
 }
 

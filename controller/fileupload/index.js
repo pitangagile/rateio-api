@@ -1,6 +1,7 @@
 const httpStatus = require('../../commons/http_status_codes')
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
+const mongoose = require('mongoose');
 
 var fileuploadController = function (fileuploadSchema) {
 
@@ -33,6 +34,8 @@ var fileuploadController = function (fileuploadSchema) {
       const total = await fileuploadSchema.find().count().exec();
       let items = await fileuploadSchema
         .find()
+        .populate('employees')
+        .populate({path:'responsable', select: "name"})
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({code: 1})
@@ -57,12 +60,22 @@ var fileuploadController = function (fileuploadSchema) {
     try {
       await connectToDatabase();
 
+      var employeesIds = [];
+      let employees = req.body.employees.split(',');
+
+      for (var i = 0; i < employees.length; i++){
+        employeesIds.push(mongoose.Types.ObjectId(employees[i]));
+      }
+
+      console.log('req.body.responsable > ', req.body.responsable);
+
       let newfileupload = new fileuploadSchema({
-        name: req.body.name,
-        responsable: req.body.responsable,
-        'file.data': req.file.buffer,
-        'file.contentType': req.file.mimetype
+        'name': req.body.name,
+        'responsable': mongoose.Types.ObjectId(req.body.responsable),
+        'status': req.body.status,
+        'employees': employeesIds,
       });
+
       newfileupload.isActive = true;
 
       newfileupload.save(function (err) {
