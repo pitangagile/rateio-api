@@ -43,10 +43,9 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       var items = await manageSchema
         .find(queryFind)
-        .skip((limit * page) - limit)
-        .limit(limit)
         .populate('reporting')
-        .populate('reporting.costCenter')
+        .limit(limit)
+        .skip((limit * page) - limit)
         .sort({'employee.name': 1})
         .exec();
 
@@ -96,6 +95,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
     }
   }
 
+  // FIXME: ghcb - verificar caso em que o CC de origem é diferente do CC de destino (não está gerando rateio)
   async function generateManage(req, res) {
     try {
       await connectToDatabase();
@@ -119,20 +119,19 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         var manage = manages[i];
         let employee = await employeeSchema.findById(manage.employee._id).exec();
         let originCostCenter = await costCenterSchema.findById(manage.originCostCenter._id).exec();
-        let reportings = await reportingSchema.find({'employee': manage.employee._id});
-
+        let reportings = await reportingSchema.find({'employee._id': manage.employee._id}).populate('costCenter').exec();
+        var totalHours = await employee.workHours * await calculateTotalBusinessDaysByActivePeriod();
         // Colaborador sem reportagens
         if (reportings.length === 0) {
-          var totalHours = await employee.workHours * await calculateTotalBusinessDaysByActivePeriod();
 
           let newReporting = await new reportingSchema({
-            period : period,
+            period: period,
             employee: employee,
-            costCenter : originCostCenter,
+            costCenter: originCostCenter,
             totalHoursCostCenter: totalHours,
           });
 
-          newReporting.save(function (err) {
+          await newReporting.save(function (err) {
             if (err) {
               res.status(httpStatus.InternalServerError).send('Erro: ' + err);
             }
@@ -143,7 +142,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
           manage.reporting = newReporting;
 
-          manage.save(function (err) {
+          await manage.save(function (err) {
             if (err) {
               res.status(httpStatus.InternalServerError).send('Erro: ' + err);
             }
@@ -156,12 +155,85 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
           let qtdCostCentersReportings = manage.reporting.costCenters.length;
 
           // Colaborador com 1 reportagem e centro de custo informado igual ao centro de custo de origem.
-          if (qtdCostCentersReportings === 1 && manage.reporting.costCenters[0]._id.equals(reportings[0].originCostCenter._id)) {
+          if (qtdCostCentersReportings === 1 && manage.originCostCenter._id === reportings[0].costCenter._id) {
 
+            let newReporting = await new reportingSchema({
+              period: period,
+              employee: employee,
+              costCenter: originCostCenter,
+              totalHoursCostCenter: totalHours,
+            });
+
+            await newReporting.save(function (err) {
+              if (err) {
+                res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+              }
+              else {
+                res.status(httpStatus.Created).end();
+              }
+            });
+
+            manage.reporting = newReporting;
+
+            await manage.save(function (err) {
+              if (err) {
+                res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+              }
+              else {
+                res.status(httpStatus.Created).end();
+              }
+            });
+          } else if(qtdCostCentersReportings === 1 && manage.originCostCenter._id !== (reportings[0].costCenter._id)) {
+            let newReporting = await new reportingSchema({
+              period: period,
+              employee: employee,
+              costCenter: reportings[0].costCenter,
+              totalHoursCostCenter: totalHours,
+            });
+
+            await newReporting.save(function (err) {
+              if (err) {
+                res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+              }
+              else {
+                res.status(httpStatus.Created).end();
+              }
+            });
+
+            reportings[0].totalHoursCostCenter = totalHours;
+
+            await reportings[0].save(function (err) {
+              if (err) {
+                res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+              }
+              else {
+                res.status(httpStatus.Created).end();
+              }
+            });
+
+
+            manage.reporting = newReporting;
+
+            await manage.save(function (err) {
+              if (err) {
+                res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+              }
+              else {
+                res.status(httpStatus.Created).end();
+              }
+            });
           }
         }
       }
-
+      period.initialManageExecuted = true;
+      await period.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Created).end();
+        }
+      });
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -240,10 +312,34 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
     }
   }
 
+  async function existManageExecuted(req, res) {
+    try {
+      await connectToDatabase();
+
+      const queryFind = {
+        $and:
+          [
+            {'isActive': true},
+            {'initialManageExecuted': true}
+          ]
+      };
+      let periods = await periodSchema.findOne(queryFind).exec();
+
+      if (periods){
+        res.status(httpStatus.Ok).json(true);
+      }else{
+        res.status(httpStatus.Ok).json(false);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     generateManage: generateManage,
     createManageFromEmployees: createManageFromEmployees,
+    existManageExecuted: existManageExecuted
   }
 };
 

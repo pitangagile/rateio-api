@@ -13,6 +13,7 @@ const manageController = require('../controller/manage')(manageSchema, employeeS
 // GET
 router.get('/api/manage', manageController.getAll);
 router.get('/api/manage/generateManage', manageController.generateManage);
+router.get('/api/manage/existManageExecuted', manageController.existManageExecuted);
 
 // POST
 router.post('/api/manage/createManageFromEmployees', manageController.createManageFromEmployees);
