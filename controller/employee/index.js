@@ -171,6 +171,21 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     }
   }
 
+  async function findEmployeeById(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema
+        .findById(req.query.user_id)
+        .exec();
+
+      res.status(httpStatus.Ok).json(employee);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   async function findEmployeeByEmail(req, res) {
     try {
       await connectToDatabase();
@@ -254,6 +269,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     create: create,
     delete: del,
     update: edit,
+    findEmployeeById: findEmployeeById,
     findUserCostCentersByUserId: findUserCostCentersByUserId,
     findCostCentersWithoutUserId: findCostCentersWithoutUserId,
     findEmployeeByEmail: findEmployeeByEmail,

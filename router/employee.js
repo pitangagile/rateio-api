@@ -7,6 +7,7 @@ const costCenterSchema = require('../models/costcenter');
 const employeeController = require('../controller/employee')(employeeSchema, costCenterSchema);
 
 router.get('/api/employee', employeeController.getAll);
+router.get('/api/employee/findEmployeeById', employeeController.findEmployeeById);
 router.get('/api/employee/findEmployeeByEmail', employeeController.findEmployeeByEmail);
 router.get('/api/employee/gridlist', employeeController.getGridList);
 router.post('/api/employee', employeeController.create);

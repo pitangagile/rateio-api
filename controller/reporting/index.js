@@ -27,33 +27,31 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       const queryFind = {
         $and: [
           {'period': period._id},
+        ],
+        $or : [
+          {'employee.name' : {"$regex": data.query, "$options": "i"}},
         ]
       };
+
+      let total = await reportingSchema.find(queryFind).count().exec();
 
       let items = await reportingSchema
         .find(queryFind)
         .populate('period')
-        .populate('employee')
         .populate('costCenter')
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({'code': 1})
         .exec();
 
-      if (items.length > 0) {
-        let response = items.filter(reporting => reporting.employee.name.toLowerCase().match(data.query.toLowerCase()));
-        const result = {
-          data: response,
-          count: response.length
-        };
-        res.status(httpStatus.Ok).json(result);
-      } else {
-        const result = {
-          data: items,
-          count: items.length
-        };
-        res.status(httpStatus.Ok).json(result);
-      }
+      console.log('total > ', total);
+
+      const result = {
+        data: items,
+        count: total
+      };
+
+      res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -69,10 +67,11 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       let reporting = await new reportingSchema(
         {
-          period: period,
-          employee: employee,
-          costCenter: costCenter,
-          totalHoursCostCenter: req.body.params.totalHoursCostCenter,
+          'period': period,
+          'employee._id': employee._id,
+          'employee.name': employee.name,
+          'costCenter': costCenter,
+          'totalHoursCostCenter': req.body.params.totalHoursCostCenter,
         });
 
       reporting.save(function (err) {
@@ -155,7 +154,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       const queryFind = {
         $and: [
-          {"employee": req.query.user_id},
+          {"employee._id": req.query.user_id},
         ]
       };
 
@@ -192,7 +191,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
             $match:
               {
                 $and: [
-                  {'employee': employee._id},
+                  {'employee._id': employee._id},
                   {'period': period._id}
                 ]
               }

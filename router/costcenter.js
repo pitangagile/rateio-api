@@ -9,7 +9,7 @@ router.post('/api/costcenter', costCenterController.create);
 router.put('/api/costcenter', costCenterController.update);
 router.delete('/api/costcenter/:id', costCenterController.delete_center);
 
-router.get('/api/costcenter/getById', costCenterController.getById);
+router.get('/api/costcenter/findById', costCenterController.findById);
 
 router.post('/api/costcenter/createall', costCenterController.createall);
 

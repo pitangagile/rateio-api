@@ -5,12 +5,15 @@ const Schema = mongoose.Schema;
 
 var manageSchema = new mongoose.Schema(
   {
+    period: {
+      description: {required: true, type: String}
+    },
     employee: {
-      _id: { required: true, type: Schema.Types.ObjectId },
+      _id: { required: true, type: Schema.Types.ObjectId , ref : 'employee'},
       name: { required: true, type: String }
     },
     originCostCenter: {
-      _id: { required: true, type: Schema.Types.ObjectId },
+      _id: { required: true, type: Schema.Types.ObjectId, ref : 'costCenter' },
       description : { required: true, type: String }
     },
     reporting: { type: Schema.Types.ObjectId , ref : 'reporting' },

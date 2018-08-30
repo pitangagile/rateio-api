@@ -156,12 +156,14 @@ var coastController = function (costCenterSchema) {
    * @param {object} req
    * @param {object} res
    */
-  async function getById(req, res) {
+  async function findById(req, res) {
     try {
       await connectToDatabase();
-      let ID = req.query['Id'];
-      const items = await costCenterSchema.find({'_id': ID}).sort({code: 1}).exec();
-      res.status(httpStatus.Ok).json(items);
+
+      let _id = req.query._id;
+      let costCenter = await costCenterSchema.findById(_id).exec();
+
+      res.status(httpStatus.Ok).json(costCenter);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -173,7 +175,7 @@ var coastController = function (costCenterSchema) {
     update: edit,
     delete_center: delete_center,
     createall: createall,
-    getById: getById,
+    findById: findById,
   }
 }
 

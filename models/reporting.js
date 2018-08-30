@@ -6,7 +6,11 @@ const Schema = mongoose.Schema;
 var reportingSchema = new mongoose.Schema(
   {
     period: {required: true, type: Schema.Types.ObjectId, ref: 'period'},
-    employee: {required: true, type: Schema.Types.ObjectId, ref: 'employee'},
+    employee:
+      {
+        _id: {required: true, type: Schema.Types.ObjectId, ref: 'employee'},
+        name: {required: true, type : String},
+      },
     costCenter: {required: true, type: Schema.Types.ObjectId, ref: 'costCenter'},
     totalHoursCostCenter: {type: Number, required: true},
   }, {timestamps: true}

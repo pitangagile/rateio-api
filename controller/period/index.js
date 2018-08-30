@@ -108,7 +108,6 @@ var periodController = function (periodSchema, holidaySchema) {
           qtdBusinessDaysAndHalfHolidays += 1;
         }
       }
-      ;
 
       return qtdBusinessDaysAndHalfHolidays;
     } catch (e) {
@@ -135,7 +134,6 @@ var periodController = function (periodSchema, holidaySchema) {
           qtdBusinessDaysAndFullHolidays += 1;
         }
       }
-      ;
 
       return qtdBusinessDaysAndFullHolidays;
 
