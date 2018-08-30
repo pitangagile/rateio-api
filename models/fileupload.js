@@ -8,7 +8,7 @@ var fileuploadSchema = new mongoose.Schema(
     name: {type: String, required: [true, '{PATH} é um campo obrigatório'], unique: true},
     responsable: {type: Schema.Types.ObjectId, ref: 'employee'},
     status: {type: String, required: [true, '{PATH} é um campo obrigatório']},
-    employees: [{type: Schema.Types.ObjectId, ref: 'employee'}],
+    registrations: [{type: String}],
   }, {timestamps: true}
 );
 

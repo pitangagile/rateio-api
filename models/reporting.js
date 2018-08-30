@@ -9,7 +9,6 @@ var reportingSchema = new mongoose.Schema(
     employee: {required: true, type: Schema.Types.ObjectId, ref: 'employee'},
     costCenter: {required: true, type: Schema.Types.ObjectId, ref: 'costCenter'},
     totalHoursCostCenter: {type: Number, required: true},
-    totalHoursReportings: {type: Number},
   }, {timestamps: true}
 );
 

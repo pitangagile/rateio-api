@@ -234,13 +234,15 @@ var employeeController = function (employeeSchema, costCenterSchema) {
 
       let registrations = req.query.registrations;
 
-      const queryFind = {
-        'registration' : { $nin : registrations}
-      };
+      var registrationsNotInDatabase = [];
 
-      let employees = await employeeSchema.find(queryFind).select('_id').exec();
-
-      res.status(httpStatus.Ok).json(employees);
+      for(var i = 0; i < registrations.length; i++){
+        let employees = await employeeSchema.findOne({$and : [{'registration' : registrations[i]}]}).exec();
+        if (!employees){
+          registrationsNotInDatabase.push(registrations[i]);
+        }
+      }
+      res.status(httpStatus.Ok).json(registrationsNotInDatabase);
     }catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }

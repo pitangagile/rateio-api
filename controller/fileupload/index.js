@@ -44,7 +44,6 @@ var fileuploadController = function (fileuploadSchema) {
         data: items,
         count: total
       }
-      console.log('data > ', result.data);
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
@@ -60,20 +59,11 @@ var fileuploadController = function (fileuploadSchema) {
     try {
       await connectToDatabase();
 
-      var employeesIds = [];
-      let employees = req.body.employees.split(',');
-
-      for (var i = 0; i < employees.length; i++){
-        employeesIds.push(mongoose.Types.ObjectId(employees[i]));
-      }
-
-      console.log('req.body.responsable > ', req.body.responsable);
-
       let newfileupload = new fileuploadSchema({
         'name': req.body.name,
         'responsable': mongoose.Types.ObjectId(req.body.responsable),
         'status': req.body.status,
-        'employees': employeesIds,
+        'registrations': req.body.registrations ? req.body.registrations.split(',') : [],
       });
 
       newfileupload.isActive = true;
