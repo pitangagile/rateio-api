@@ -16,7 +16,11 @@ var manageSchema = new mongoose.Schema(
       _id: { required: true, type: Schema.Types.ObjectId, ref : 'costCenter' },
       description : { required: true, type: String }
     },
-    reporting: { type: Schema.Types.ObjectId , ref : 'reporting' },
+    destinyCostCenter : {
+      _id: { type: Schema.Types.ObjectId, ref : 'costCenter' },
+      description : { type: String }
+    },
+    hours : {type: Number}
   }, { timestamps: true }
 );
 
