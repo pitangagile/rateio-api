@@ -70,8 +70,9 @@ var employeeController = function (employeeSchema, costCenterSchema) {
   async function create(req, res) {
     try {
       await connectToDatabase();
-      let newEmployee = new employeeSchema(req.body);
-      newEmployee.isActive = true;
+
+      let employee = req.body.params.employee;
+      let newEmployee = new employeeSchema(employee);
 
       newEmployee.save(function (err) {
         if (err) {
