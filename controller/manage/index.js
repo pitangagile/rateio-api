@@ -5,7 +5,7 @@ const co = require('co');
 const connectToDatabase = require('../../commons/database');
 const moment = require('moment-business-days');
 
-var manageController = function (manageSchema, employeeSchema, costCenterSchema, periodSchema, reportingSchema, holidaySchema) {
+var manageController = function (manageSchema, employeeSchema, costCenterSchema, periodSchema, reportingSchema, holidaySchema, fileUploadSchema) {
 
   moment.updateLocale('br',
     {
@@ -77,6 +77,10 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         .find(queryFind)
         .sort({'employee.name': 1})
         .exec();
+
+      for (var i = 0; i < items.length; i++){
+        items[i].allocation = Math.round(items[i].allocation);
+      }
 
       res.status(httpStatus.Ok).json(items);
     } catch (e) {
@@ -174,15 +178,24 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
             let reportingHours = reportings[0].totalHoursCostCenter;
 
             // CC origem === CC destino
-            if (originCostCenter._id === destinyCostCenter._id) {
+            if (originCostCenter._id.equals(destinyCostCenter._id)) {
               await generateAndSaveManage(manageFromSpreadSheet, originCostCenter, reportingHours, reportingHours);
             }
             // CC origem !== CC destino
             else {
               //  reportingHours < idealHours
-              if (reportingHours < idealHours) {
-                await generateAndSaveManage(manageFromSpreadSheet, originCostCenter, reportingHours, idealHours);
-                await generateAndSaveManage(manageFromSpreadSheet, destinyCostCenter, await (idealHours - reportingHours), idealHours);
+              if (totalHoursReporting < idealHours) {
+                let newManage = await new manageSchema({
+                  'period.description': period.description,
+                  'employee._id': employee._id,
+                  'employee.registration': employee.registration,
+                  'employee.name': employee.name,
+                  'originCostCenter._id': originCostCenter._id,
+                  'originCostCenter.code': originCostCenter.code,
+                  'originCostCenter.description': originCostCenter.description,
+                });
+                await generateAndSaveManage(newManage, destinyCostCenter, totalHoursReporting , idealHours);
+                await generateAndSaveManage(manageFromSpreadSheet, originCostCenter , await (idealHours - totalHoursReporting), idealHours);
               }
               // reportingHours >= idealHours
               else {
@@ -198,6 +211,8 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
               await generateAndSaveManage(manageFromSpreadSheet, originCostCenter, hoursNotReporting, idealHours);
 
               for (var j = 0; j < qtdReportingsOfEmployee; j++) {
+                let destinyCostCenter = reportings[j].costCenter;
+
                 let newManage = await new manageSchema({
                   'period.description': period.description,
                   'employee._id': employee._id,
@@ -208,10 +223,33 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
                   'originCostCenter.description': originCostCenter.description,
                 });
 
-                if (totalHoursReporting < idealHours){
-                  await generateAndSaveManage(newManage, reportings[j].costCenter, reportings[j].totalHoursCostCenter, idealHours);
-                } else{
+                if (totalHoursReporting < idealHours) {
+                  if (originCostCenter._id.equals(destinyCostCenter._id)) {
+                    await generateAndSaveManage(manageFromSpreadSheet, reportings[j].costCenter, await (idealHours - (await (totalHoursReporting - reportings[j].totalHoursCostCenter))), idealHours);
+                  }else{
+                    await generateAndSaveManage(newManage, reportings[j].costCenter, reportings[j].totalHoursCostCenter, idealHours);
+                  }
+                } else {
                   await generateAndSaveManage(newManage, reportings[j].costCenter, reportings[j].totalHoursCostCenter, totalHoursReporting);
+                }
+              }
+            }else{
+              for (var k = 0; k < qtdReportingsOfEmployee; k++) {
+                let destinyCostCenter = reportings[k].costCenter;
+                let totalHoursCostCenter = reportings[k].totalHoursCostCenter;
+                if (originCostCenter._id.equals(destinyCostCenter._id)) {
+                  await generateAndSaveManage(manageFromSpreadSheet, destinyCostCenter , totalHoursCostCenter, totalHoursReporting);
+                } else {
+                  let newManage = await new manageSchema({
+                    'period.description': period.description,
+                    'employee._id': employee._id,
+                    'employee.registration': employee.registration,
+                    'employee.name': employee.name,
+                    'originCostCenter._id': originCostCenter._id,
+                    'originCostCenter.code': originCostCenter.code,
+                    'originCostCenter.description': originCostCenter.description,
+                  });
+                  await generateAndSaveManage(newManage, destinyCostCenter, totalHoursCostCenter, totalHoursReporting);
                 }
               }
             }
@@ -226,13 +264,12 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
   }
 
   async function generateAndSaveManage(manage, destinyCostCenter, hours, totalHoursReporting) {
-
     manage.destinyCostCenter._id = destinyCostCenter._id;
     manage.destinyCostCenter.code = destinyCostCenter.code;
     manage.destinyCostCenter.description = destinyCostCenter.description;
     manage.hours = hours;
     manage.totalHoursReporting = totalHoursReporting;
-    manage.allocation = await (await (hours / totalHoursReporting) * 100);
+    manage.allocation = (await (await (hours / totalHoursReporting) * 100)).toFixed(2);
 
     await manage.save(function (err) {
       if (err) {
@@ -323,20 +360,77 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
     }
   }
 
-  async function existManageExecuted(req, res) {
+  async function isPossibleExecuteManage(req, res) {
     try {
       await connectToDatabase();
 
-      const queryFind = {
+      const queryFindPeriod = {
+        $and:
+          [
+            {'isActive': true},
+            {'initialManageExecuted': false}
+          ]
+      };
+
+      const queryFindFileUpload = {
+        $and:
+          [
+            {'status': 'Sucesso'},
+          ]
+      };
+
+
+      let period = await periodSchema.findOne(queryFindPeriod).exec();
+      let fileUpload = await fileUploadSchema.findOne(queryFindFileUpload).populate('period').exec();
+
+      let executeManage =
+        period !== null
+        &&  period !== undefined
+        && fileUpload !== null
+        && fileUpload !== undefined
+        && period._id.equals(fileUpload.period._id);
+
+      if (executeManage) {
+        res.status(httpStatus.Ok).json(true);
+      } else {
+        res.status(httpStatus.Ok).json(false);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function manageExecutedWithSuccess(req, res) {
+    try {
+      await connectToDatabase();
+
+      const queryFindPeriod = {
         $and:
           [
             {'isActive': true},
             {'initialManageExecuted': true}
           ]
       };
-      let period = await periodSchema.findOne(queryFind).exec();
 
-      if (period) {
+      const queryFindFileUpload = {
+        $and:
+          [
+            {'status': 'Sucesso'},
+          ]
+      };
+
+
+      let period = await periodSchema.findOne(queryFindPeriod).exec();
+      let fileUpload = await fileUploadSchema.findOne(queryFindFileUpload).populate('period').exec();
+
+      let manageExecuteWithSuccess =
+        period !== null
+        &&  period !== undefined
+        && fileUpload !== null
+        && fileUpload !== undefined
+        && period._id.equals(fileUpload.period._id);
+
+      if (manageExecuteWithSuccess) {
         res.status(httpStatus.Ok).json(true);
       } else {
         res.status(httpStatus.Ok).json(false);
@@ -396,7 +490,8 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
     getAllToDownload: getAllToDownload,
     generateManage: generateManage,
     createManagesFromFile: createManagesFromFile,
-    existManageExecuted: existManageExecuted
+    isPossibleExecuteManage: isPossibleExecuteManage,
+    manageExecutedWithSuccess: manageExecutedWithSuccess
   }
 };
 

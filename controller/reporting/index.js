@@ -28,8 +28,8 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
         $and: [
           {'period': period._id},
         ],
-        $or : [
-          {'employee.name' : {"$regex": data.query, "$options": "i"}},
+        $or: [
+          {'employee.name': {"$regex": data.query, "$options": "i"}},
         ]
       };
 
@@ -232,38 +232,33 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     try {
       await connectToDatabase();
 
-      let activePeriod = await periodSchema.find({'isActive': true}).exec();
+      let period = await periodSchema.find({'isActive': true}).exec();
 
-      let reportingsCcs = await reportingSchema.find({
-        'employee': req.query.user_id,
-        'period': activePeriod
-      }, 'costCenter').populate('costCenter').exec();
-
-      let userCostCenters = await employeeSchema.findById(req.query.user_id)
+      let employee = await employeeSchema.findById(req.query.user_id)
         .sort({code: 1})
         .exec();
 
-      var userIdsCcs = userCostCenters.costCenters;
-      var userIdsCcsObjectId = [];
-      var reportingIdsCcs = [];
-      var idsCcs = [];
+      var response = [];
 
-      for (var i = 0; i < userIdsCcs.length; i++) {
-        userIdsCcsObjectId.push(userIdsCcs[i].toString());
-      }
+      for (var i = 0; i < employee.costCenters.length; i++) {
 
-      for (var i = 0; i < reportingsCcs.length; i++) {
-        reportingIdsCcs.push(reportingsCcs[i].costCenter._id.toString());
-      }
+        const queryFind = {
+          $and: [
+            {'employee._id': req.query.user_id},
+            {'period': period},
+            {'costCenter': employee.costCenters[i]}
+          ]
+        };
 
-      for (var i = 0; i < userIdsCcs.length; i++) {
-        var index = reportingIdsCcs.indexOf(userIdsCcsObjectId[i]);
-        if (index < 0) {
-          idsCcs.push(userIdsCcsObjectId[i]);
+        let reporting = await reportingSchema.findOne(queryFind).exec();
+
+        console.log('reporting > ', reporting);
+
+        if (!reporting){
+          let costCenter = await costCenterSchema.findById(employee.costCenters[i]);
+          response.push(costCenter);
         }
       }
-
-      let response = await costCenterSchema.find({'_id': {$in: idsCcs}}).exec();
 
       const result = {
         data: response
