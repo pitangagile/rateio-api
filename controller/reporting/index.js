@@ -72,6 +72,12 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
           'employee.name': employee.name,
           'costCenter': costCenter,
           'totalHoursCostCenter': req.body.params.totalHoursCostCenter,
+          'isPerDiscipline' : req.body.params.isPerDiscipline,
+          'discipline.req': req.body.params.discipline.req,
+          'discipline.aep': req.body.params.discipline.aep,
+          'discipline.imple': req.body.params.discipline.imple,
+          'discipline.tst': req.body.params.discipline.tst,
+          'discipline.peg': req.body.params.discipline.peg,
         });
 
       reporting.save(function (err) {
@@ -96,11 +102,19 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     try {
       await connectToDatabase();
 
+      console.log('req > ', req);
+
       reportingSchema.findById(req.body._id, function (err, entity) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Reportagem não encontrada');
         }
         else {
+          entity.discipline.req = req.body.discipline.req;
+          entity.discipline.aep = req.body.discipline.aep;
+          entity.discipline.imple = req.body.discipline.imple;
+          entity.discipline.tst = req.body.discipline.tst;
+          entity.discipline.peg = req.body.discipline.peg;
+          entity.isPerDiscipline = req.body.isPerDiscipline;
           entity.totalHoursCostCenter = req.body.totalHoursCostCenter;
           entity.save(function (err) {
             if (err) {
@@ -254,7 +268,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
         console.log('reporting > ', reporting);
 
-        if (!reporting){
+        if (!reporting) {
           let costCenter = await costCenterSchema.findById(employee.costCenters[i]);
           response.push(costCenter);
         }

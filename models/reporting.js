@@ -9,9 +9,17 @@ var reportingSchema = new mongoose.Schema(
     employee:
       {
         _id: {required: true, type: Schema.Types.ObjectId, ref: 'employee'},
-        name: {required: true, type : String},
+        name: {required: true, type: String},
       },
     costCenter: {required: true, type: Schema.Types.ObjectId, ref: 'costCenter'},
+    isPerDiscipline: {type : Boolean, required: true},
+    discipline: {
+      req: {type: Number},
+      aep: {type: Number},
+      imple: {type: Number},
+      tst: {type: Number},
+      peg: {type: Number},
+    },
     totalHoursCostCenter: {type: Number, required: true},
   }, {timestamps: true}
 );
