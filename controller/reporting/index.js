@@ -72,7 +72,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
           'employee.name': employee.name,
           'costCenter': costCenter,
           'totalHoursCostCenter': req.body.params.totalHoursCostCenter,
-          'isPerDiscipline' : req.body.params.isPerDiscipline,
+          'isPerDiscipline': req.body.params.isPerDiscipline,
           'discipline.req': req.body.params.discipline.req,
           'discipline.aep': req.body.params.discipline.aep,
           'discipline.imple': req.body.params.discipline.imple,
@@ -284,6 +284,62 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     }
   }
 
+  async function findReportingHoursDisciplinePerCostCenter(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = JSON.parse(req.query.period);
+      let costCenter = JSON.parse(req.query.costCenter);
+
+      console.log('period._id > ', mongoose.Types.ObjectId(period._id));
+      console.log('costCenter._id > ', mongoose.Types.ObjectId(costCenter._id));
+
+
+      var response = await reportingSchema.aggregate([
+          {
+            $match:
+              {
+                $and: [
+                  {'costCenter': mongoose.Types.ObjectId(costCenter._id)},
+                  {'period': mongoose.Types.ObjectId(period._id)}
+                ]
+              }
+          },
+          {
+            $group:
+              {
+                _id: null,
+                totalReq: {$sum: "$discipline.req"},
+                totalAep: {$sum: "$discipline.aep"},
+                totalImple: {$sum: "$discipline.imple"},
+                totalTst: {$sum: "$discipline.tst"},
+                totalPeg: {$sum: "$discipline.peg"},
+              },
+          },
+          {
+            $project: {_id: 0, totalReq: 1, totalAep: 2, totalImple: 3, totalTst: 4, totalPeg: 5}
+          }
+        ]
+      ).exec();
+
+      console.log('response > ', response);
+
+      if (!response[0]) {
+        const result = {
+          data : {totalReq: 0, totalAep: 0, totalImple : 0, totalTst : 0, totalPeg : 0},
+        };
+        res.status(httpStatus.Ok).json(result);
+      }else{
+        const result = {
+          data : response[0],
+        };
+        res.status(httpStatus.Ok).json(result);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   return {
     findAllByActivePeriod: findAllByActivePeriod,
     create: create,
@@ -292,6 +348,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     findReportsByUserId: findReportsByUserId,
     calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
     findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod,
+    findReportingHoursDisciplinePerCostCenter: findReportingHoursDisciplinePerCostCenter,
   }
 };
 

@@ -38,6 +38,21 @@ var coastController = function (costCenterSchema) {
     }
   }
 
+  async function findAllCostCenters(req, res){
+    try {
+      await connectToDatabase();
+
+      let items = await costCenterSchema
+        .find()
+        .sort({code: 1})
+        .exec();
+
+      res.status(httpStatus.Ok).json(items);
+    }catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   /**
    * Creates a new Coast Center
    * @param {object} req The Express Request object
@@ -176,8 +191,9 @@ var coastController = function (costCenterSchema) {
     delete_center: delete_center,
     createall: createall,
     findById: findById,
+    findAllCostCenters, findAllCostCenters,
   }
-}
+};
 
 
 module.exports = coastController;

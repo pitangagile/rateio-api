@@ -52,6 +52,21 @@ var periodController = function (periodSchema, holidaySchema) {
     }
   }
 
+  async function findAllPeriods(req, res){
+    try {
+      await connectToDatabase();
+
+      let items = await periodSchema
+        .find()
+        .sort({code: 1})
+        .exec();
+
+      res.status(httpStatus.Ok).json(items);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   async function pickActivePeriod(req, res) {
     try {
       await connectToDatabase();
@@ -144,9 +159,10 @@ var periodController = function (periodSchema, holidaySchema) {
 
   return {
     getAll: getAll,
+    findAllPeriods : findAllPeriods,
     pickActivePeriod: pickActivePeriod,
     calculateTotalBusinessDaysByActivePeriod, calculateTotalBusinessDaysByActivePeriod,
   }
-}
+};
 
 module.exports = periodController;
