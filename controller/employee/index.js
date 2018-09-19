@@ -1,4 +1,4 @@
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
@@ -22,7 +22,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       const result = {
         data: items,
         count: total
-      }
+      };
       res.status(httpStatus.Ok).json(items);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
@@ -55,7 +55,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       const result = {
         data: items,
         count: total
-      }
+      };
       res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
@@ -143,18 +143,13 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     try {
       await connectToDatabase();
 
-      var queryFind = '';
       const limit = parseInt(req.query.limit);
       const page = parseInt(req.query.page);
 
-      var employee = await employeeSchema.findById(req.query.user_id, 'costCenters').exec();
+      var employee = await employeeSchema.findById(mongoose.Types.ObjectId(req.query.user_id), 'costCenters').exec();
 
-      queryFind = {
-        $and: [{'_id': employee.costCenters}]
-      };
-
-      let costCenters = await costCenterSchema.find(queryFind)
-        .find(queryFind)
+      let listIdCostCenters = employee.costCenters;
+      let costCenters = await costCenterSchema.find({'_id': {$in: listIdCostCenters}})
         .skip((limit * page) - limit)
         .limit(limit)
         .sort({code: 1})
@@ -229,8 +224,10 @@ var employeeController = function (employeeSchema, costCenterSchema) {
       await connectToDatabase();
 
       var employee = await employeeSchema.findById(req.body.params.user_id).exec();
+      var costCenter = await costCenterSchema.findOne({"_id" : req.body.params.costCenter._id}).exec();
 
-      employee.costCenters.push(req.body.params.costCenter);
+      await employee.costCenters.push(costCenter._id);
+
       employee.save(function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);
@@ -277,6 +274,6 @@ var employeeController = function (employeeSchema, costCenterSchema) {
     addCostCenter: addCostCenter,
     validateAllEmployeesFromSpreadsheet : validateAllEmployeesFromSpreadsheet
   }
-}
+};
 
 module.exports = employeeController;

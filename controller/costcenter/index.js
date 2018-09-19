@@ -1,4 +1,4 @@
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 
@@ -43,7 +43,7 @@ var coastController = function (costCenterSchema) {
       await connectToDatabase();
 
       let items = await costCenterSchema
-        .find()
+        .find({})
         .sort({code: 1})
         .exec();
 
@@ -191,7 +191,7 @@ var coastController = function (costCenterSchema) {
     delete_center: delete_center,
     createall: createall,
     findById: findById,
-    findAllCostCenters, findAllCostCenters,
+    findAllCostCenters : findAllCostCenters,
   }
 };
 

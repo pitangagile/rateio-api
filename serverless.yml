@@ -35,17 +35,17 @@ functions:
   ping:
     handler: handler.ping
     events:
-      - http:
-          path: ping
-          method: get
-          cors: true
+    - http:
+        path: ping
+        method: get
+        cors: true
   api:
     handler: router/api.routers
     events:
-      - http:
-          path: api/{proxy+}
-          method: ANY
-          cors: true
+    - http:
+        path: api/{proxy+}
+        method: ANY
+        cors: true
 
 custom:
   env: dev

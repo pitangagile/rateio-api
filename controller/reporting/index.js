@@ -1,5 +1,5 @@
 const utilities = require('../../commons/utilities');
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
 const mongoose = require('mongoose');
@@ -7,7 +7,7 @@ const moment = require('moment-business-days');
 
 var reportingController = function (reportingSchema, employeeSchema, costCenterSchema, periodSchema) {
 
-  moment.updateLocale('br',
+  moment.updateLocale('pt',
     {
       workingWeekdays: [1, 2, 3, 4, 5]
     }
@@ -248,9 +248,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       let period = await periodSchema.find({'isActive': true}).exec();
 
-      let employee = await employeeSchema.findById(req.query.user_id)
-        .sort({code: 1})
-        .exec();
+      let employee = await employeeSchema.findById(req.query.user_id).exec();
 
       var response = [];
 
@@ -326,12 +324,12 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       if (!response[0]) {
         const result = {
-          data : {totalReq: 0, totalAep: 0, totalImple : 0, totalTst : 0, totalPeg : 0},
+          data: {totalReq: 0, totalAep: 0, totalImple: 0, totalTst: 0, totalPeg: 0},
         };
         res.status(httpStatus.Ok).json(result);
-      }else{
+      } else {
         const result = {
-          data : response[0],
+          data: response[0],
         };
         res.status(httpStatus.Ok).json(result);
       }

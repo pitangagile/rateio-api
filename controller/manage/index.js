@@ -78,7 +78,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         .sort({'employee.name': 1})
         .exec();
 
-      for (var i = 0; i < items.length; i++){
+      for (var i = 0; i < items.length; i++) {
         items[i].allocation = Math.round(items[i].allocation);
       }
 
@@ -162,8 +162,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         // Usuário sem reportagens
         if (qtdReportingsOfEmployee === 0) {
           if (qtdCostCentersOfEmployee === 0 || qtdCostCentersOfEmployee > 1) {
-            let destinyCostCenter = originCostCenter;
-            await generateAndSaveManage(manageFromSpreadSheet, destinyCostCenter, idealHours, idealHours, res);
+            await generateAndSaveManage(manageFromSpreadSheet, originCostCenter, idealHours, idealHours, res);
           }
           else if (qtdCostCentersOfEmployee === 1) {
             let destinyCostCenter = userCostCenters[0];
@@ -194,8 +193,8 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
                   'originCostCenter.code': originCostCenter.code,
                   'originCostCenter.description': originCostCenter.description,
                 });
-                await generateAndSaveManage(newManage, destinyCostCenter, totalHoursReporting , idealHours);
-                await generateAndSaveManage(manageFromSpreadSheet, originCostCenter , await (idealHours - totalHoursReporting), idealHours);
+                await generateAndSaveManage(newManage, destinyCostCenter, totalHoursReporting, idealHours);
+                await generateAndSaveManage(manageFromSpreadSheet, originCostCenter, await (idealHours - totalHoursReporting), idealHours);
               }
               // reportingHours >= idealHours
               else {
@@ -226,19 +225,19 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
                 if (totalHoursReporting < idealHours) {
                   if (originCostCenter._id.equals(destinyCostCenter._id)) {
                     await generateAndSaveManage(manageFromSpreadSheet, reportings[j].costCenter, await (idealHours - (await (totalHoursReporting - reportings[j].totalHoursCostCenter))), idealHours);
-                  }else{
+                  } else {
                     await generateAndSaveManage(newManage, reportings[j].costCenter, reportings[j].totalHoursCostCenter, idealHours);
                   }
                 } else {
                   await generateAndSaveManage(newManage, reportings[j].costCenter, reportings[j].totalHoursCostCenter, totalHoursReporting);
                 }
               }
-            }else{
+            } else {
               for (var k = 0; k < qtdReportingsOfEmployee; k++) {
                 let destinyCostCenter = reportings[k].costCenter;
                 let totalHoursCostCenter = reportings[k].totalHoursCostCenter;
                 if (originCostCenter._id.equals(destinyCostCenter._id)) {
-                  await generateAndSaveManage(manageFromSpreadSheet, destinyCostCenter , totalHoursCostCenter, totalHoursReporting);
+                  await generateAndSaveManage(manageFromSpreadSheet, destinyCostCenter, totalHoursCostCenter, totalHoursReporting);
                 } else {
                   let newManage = await new manageSchema({
                     'period.description': period.description,
@@ -294,9 +293,8 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
       var period = await periodSchema.findOne({'isActive': true}).exec();
 
       var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
-      var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod() - (0.5 * await getQtdHalfHolidaysInActivePeriod());
 
-      return absQtdBusinessDays;
+      return qtdBusinessDays - await getQtdFullHolidaysInActivePeriod() - (0.5 * await getQtdHalfHolidaysInActivePeriod());
     } catch (e) {
       console.error('Erro: ' + e);
     }
@@ -385,7 +383,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       let executeManage =
         period !== null
-        &&  period !== undefined
+        && period !== undefined
         && fileUpload !== null
         && fileUpload !== undefined
         && period._id.equals(fileUpload.period._id);
@@ -425,7 +423,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       let manageExecuteWithSuccess =
         period !== null
-        &&  period !== undefined
+        && period !== undefined
         && fileUpload !== null
         && fileUpload !== undefined
         && period._id.equals(fileUpload.period._id);
@@ -475,7 +473,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         return response;
       });
 
-      if (response[0] == undefined) {
+      if (response[0]) {
         return 0;
       } else {
         return response[0].totalHoursReportingByActivePeriod;

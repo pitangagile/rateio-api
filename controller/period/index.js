@@ -1,5 +1,5 @@
 const utilities = require('../../commons/utilities');
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const co = require('co');
 const connectToDatabase = require('../../commons/database');
@@ -159,9 +159,11 @@ var periodController = function (periodSchema, holidaySchema) {
 
   return {
     getAll: getAll,
-    findAllPeriods : findAllPeriods,
+    findAllPeriods: findAllPeriods,
     pickActivePeriod: pickActivePeriod,
-    calculateTotalBusinessDaysByActivePeriod, calculateTotalBusinessDaysByActivePeriod,
+    calculateTotalBusinessDaysByActivePeriod: calculateTotalBusinessDaysByActivePeriod,
+    getQtdHalfHolidaysInActivePeriod: getQtdHalfHolidaysInActivePeriod,
+    getQtdFullHolidaysInActivePeriod: getQtdFullHolidaysInActivePeriod
   }
 };
 
