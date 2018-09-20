@@ -289,10 +289,6 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       let period = JSON.parse(req.query.period);
       let costCenter = JSON.parse(req.query.costCenter);
 
-      console.log('period._id > ', mongoose.Types.ObjectId(period._id));
-      console.log('costCenter._id > ', mongoose.Types.ObjectId(costCenter._id));
-
-
       var response = await reportingSchema.aggregate([
           {
             $match:
@@ -324,16 +320,53 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       if (!response[0]) {
         const result = {
-          data: {totalReq: 0, totalAep: 0, totalImple: 0, totalTst: 0, totalPeg: 0},
+          data: [{totalReq: 0, totalAep: 0, totalImple: 0, totalTst: 0, totalPeg: 0}],
         };
         res.status(httpStatus.Ok).json(result);
       } else {
         const result = {
-          data: response[0],
+          data: response,
         };
         res.status(httpStatus.Ok).json(result);
       }
     } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findReportingHoursEmployeePerCostCenter(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = JSON.parse(req.query.period);
+      let costCenter = JSON.parse(req.query.costCenter);
+
+      var response = await reportingSchema.aggregate([
+          {
+            $match:
+              {
+                $and: [
+                  {'costCenter': mongoose.Types.ObjectId(costCenter._id)},
+                  {'period': mongoose.Types.ObjectId(period._id)}
+                ]
+              }
+          },
+          {
+            $group:
+              {
+                _id: "$employee.name",
+                hours: {$sum: "$totalHoursCostCenter"},
+              },
+          }
+        ]
+      ).exec();
+
+      const result = {
+        data: response,
+      };
+      res.status(httpStatus.Ok).json(result);
+
+    }catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
@@ -347,6 +380,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
     findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod,
     findReportingHoursDisciplinePerCostCenter: findReportingHoursDisciplinePerCostCenter,
+    findReportingHoursEmployeePerCostCenter : findReportingHoursEmployeePerCostCenter,
   }
 };
 

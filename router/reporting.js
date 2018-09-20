@@ -18,6 +18,6 @@ router.get('/api/reporting/findReportsByUserId', reportingsController.findReport
 router.get('/api/reporting/calculateTotalReportingHoursByUserIdAndPerActivePeriod', reportingsController.calculateTotalReportingHoursByUserIdAndPerActivePeriod);
 router.get('/api/reporting/findUserCostCenterByUserIdWithoutReportingInPeriod', reportingsController.findUserCostCenterByUserIdWithoutReportingInPeriod);
 router.get('/api/reporting/findReportingHoursDisciplinePerCostCenter', reportingsController.findReportingHoursDisciplinePerCostCenter);
-
+router.get('/api/reporting/findReportingHoursEmployeePerCostCenter', reportingsController.findReportingHoursEmployeePerCostCenter);
 
 module.exports = router;
