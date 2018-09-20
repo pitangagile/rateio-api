@@ -209,7 +209,7 @@ var employeeController = function (employeeSchema, costCenterSchema) {
 
       let listIdCostCenters = employee.costCenters;
       let notUserCostCenters = await costCenterSchema.find({'_id': {$nin: listIdCostCenters}})
-        .sort({code: 1})
+        .sort({description: 1})
         .exec();
 
       res.status(httpStatus.Ok).send(notUserCostCenters);

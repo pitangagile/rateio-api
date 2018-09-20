@@ -25,7 +25,7 @@ var coastController = function (costCenterSchema) {
         .find(queryFind)
         .skip((limit * page) - limit)
         .limit(limit)
-        .sort({code: 1})
+        .sort({description: 1})
         .exec();
       const result = {
         data: items,
@@ -44,7 +44,7 @@ var coastController = function (costCenterSchema) {
 
       let items = await costCenterSchema
         .find({})
-        .sort({code: 1})
+        .sort({description: 1})
         .exec();
 
       res.status(httpStatus.Ok).json(items);

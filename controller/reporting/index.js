@@ -41,7 +41,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
         .populate('costCenter')
         .skip((limit * page) - limit)
         .limit(limit)
-        .sort({'code': 1})
+        .sort({'employee.name': 1})
         .exec();
 
       console.log('total > ', total);
