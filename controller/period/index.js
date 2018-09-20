@@ -5,7 +5,7 @@ const co = require('co');
 const connectToDatabase = require('../../commons/database');
 const moment = require('moment-business-days');
 
-var periodController = function (periodSchema, holidaySchema) {
+var periodController = function (periodSchema, holidaySchema, fileUploadSchema) {
 
   moment.updateLocale('br',
     {
@@ -52,7 +52,7 @@ var periodController = function (periodSchema, holidaySchema) {
     }
   }
 
-  async function findAllPeriods(req, res){
+  async function findAllPeriods(req, res) {
     try {
       await connectToDatabase();
 
@@ -157,13 +157,38 @@ var periodController = function (periodSchema, holidaySchema) {
     }
   }
 
+  async function findAllPeriodsWithoutFile(req, res) {
+    try {
+      await connectToDatabase();
+
+      periodsWithFile = [];
+
+      let files = await fileUploadSchema.find({}).populate('period').exec();
+
+      for (var i = 0; i < files.length; i++) {
+        periodsWithFile.push(files[i].period._id);
+      }
+
+      const queryFind = {
+        '_id': {$nin: periodsWithFile}
+      };
+
+      let periods = await periodSchema.find(queryFind).exec();
+
+      res.status(httpStatus.Ok).json(periods);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     findAllPeriods: findAllPeriods,
     pickActivePeriod: pickActivePeriod,
     calculateTotalBusinessDaysByActivePeriod: calculateTotalBusinessDaysByActivePeriod,
     getQtdHalfHolidaysInActivePeriod: getQtdHalfHolidaysInActivePeriod,
-    getQtdFullHolidaysInActivePeriod: getQtdFullHolidaysInActivePeriod
+    getQtdFullHolidaysInActivePeriod: getQtdFullHolidaysInActivePeriod,
+    findAllPeriodsWithoutFile: findAllPeriodsWithoutFile,
   }
 };
 

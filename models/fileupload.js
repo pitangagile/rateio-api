@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 
 var fileuploadSchema = new mongoose.Schema(
   {
-    period: {type: Schema.Types.ObjectId, ref: 'period', required: [true, '{PATH} é um campo obrigatório']},
+    period: {unique: true, type: Schema.Types.ObjectId, ref: 'period', required: [true, '{PATH} é um campo obrigatório']},
     name: {type: String, required: [true, '{PATH} é um campo obrigatório']},
     responsable: {type: Schema.Types.ObjectId, ref: 'employee'},
     status: {type: String, required: [true, '{PATH} é um campo obrigatório']},
