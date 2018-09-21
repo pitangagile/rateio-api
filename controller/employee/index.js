@@ -123,9 +123,6 @@ var employeeController = function (employeeSchema, costCenterSchema) {
 
       let employeeId = req.body.params.employee._id;
 
-      console.log('req > ', req);
-      console.log('employeeId > ', employeeId);
-
       await employeeSchema.findById(employeeId).exec();
 
       await employeeSchema.findByIdAndUpdate(employeeId, req.body.params.employee, function (err) {

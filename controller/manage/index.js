@@ -22,38 +22,46 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       let period = await periodSchema.findOne({'isActive': true}).exec();
 
-      let queryFind = {
-        $and: [
-          {
-            'period.name': period.name,
-          }
-        ],
-        $or: [
-          {
-            'employee.name':
-              {"$regex": req.query.query, "$options": "i"}
-          }
-        ]
-      };
+      if (period === null || period === undefined){
+        const result = {
+          data: [],
+          count: 0
+        };
+        res.status(httpStatus.Ok).json(result);
+      }else{
+        let queryFind = {
+          $and: [
+            {
+              'period.name': period.name,
+            }
+          ],
+          $or: [
+            {
+              'employee.name':
+                {"$regex": req.query.query, "$options": "i"}
+            }
+          ]
+        };
 
-      var total = await manageSchema
-        .find(queryFind)
-        .count()
-        .exec();
+        var total = await manageSchema
+          .find(queryFind)
+          .count()
+          .exec();
 
-      var items = await manageSchema
-        .find(queryFind)
-        .limit(limit)
-        .skip((limit * page) - limit)
-        .sort({'employee.name': 1})
-        .exec();
+        var items = await manageSchema
+          .find(queryFind)
+          .limit(limit)
+          .skip((limit * page) - limit)
+          .sort({'employee.name': 1})
+          .exec();
 
-      const result = {
-        data: items,
-        count: total
-      };
+        const result = {
+          data: items,
+          count: total
+        };
 
-      res.status(httpStatus.Ok).json(result);
+        res.status(httpStatus.Ok).json(result);
+      }
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -65,24 +73,30 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       let period = await periodSchema.findOne({'isActive': true}).exec();
 
-      let queryFind = {
-        $and: [
-          {
-            'period.name': period.name,
-          }
-        ]
-      };
+      console.log('period > ', period);
 
-      var items = await manageSchema
-        .find(queryFind)
-        .sort({'employee.name': 1})
-        .exec();
+      if (period === null || period === undefined){
+        res.status(httpStatus.Ok).json([]);
+      } else{
+        let queryFind = {
+          $and: [
+            {
+              'period.name': period.name,
+            }
+          ]
+        };
 
-      for (var i = 0; i < items.length; i++) {
-        items[i].allocation = Math.round(items[i].allocation);
+        var items = await manageSchema
+          .find(queryFind)
+          .sort({'employee.name': 1})
+          .exec();
+
+        for (var i = 0; i < items.length; i++) {
+          items[i].allocation = Math.round(items[i].allocation);
+        }
+
+        res.status(httpStatus.Ok).json(items);
       }
-
-      res.status(httpStatus.Ok).json(items);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -473,7 +487,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         return response;
       });
 
-      if (response[0]) {
+      if (response[0] === null || response[0] === undefined) {
         return 0;
       } else {
         return response[0].totalHoursReportingByActivePeriod;

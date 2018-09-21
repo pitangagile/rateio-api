@@ -5,7 +5,7 @@ const co = require('co');
 const connectToDatabase = require('../../commons/database');
 const moment = require('moment-business-days');
 
-var periodController = function (periodSchema, holidaySchema, fileUploadSchema) {
+var periodController = function (periodSchema, holidaySchema, fileUploadSchema, manageSchema, reportingSchema) {
 
   moment.updateLocale('br',
     {
@@ -30,8 +30,6 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema) 
           {"description": {"$regex": req.query.query, "$options": "i"}},
         ]
       };
-
-      console.log('req.query.query > ', req.query.query);
 
       let total = await periodSchema.find(queryFind).count().exec();
       let items = await periodSchema
@@ -89,14 +87,22 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema) 
 
       var period = await periodSchema.findOne({'isActive': true}).exec();
 
-      var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
-      var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0.5 * await getQtdHalfHolidaysInActivePeriod(period));
+      if (period === null || period === undefined){
+        const result = {
+          data: 0
+        };
 
-      const result = {
-        data: absQtdBusinessDays
-      };
+        res.status(httpStatus.Ok).json(result);
+      } else{
+        var qtdBusinessDays = moment(period.finalDate, 'YYYY-MM-DD').businessDiff(moment(period.initialDate, 'YYYY-MM-DD'));
+        var absQtdBusinessDays = qtdBusinessDays - await getQtdFullHolidaysInActivePeriod(period) - (0.5 * await getQtdHalfHolidaysInActivePeriod(period));
 
-      res.status(httpStatus.Ok).json(result);
+        const result = {
+          data: absQtdBusinessDays
+        };
+
+        res.status(httpStatus.Ok).json(result);
+      }
 
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
@@ -181,6 +187,124 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema) 
     }
   }
 
+  async function remove(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = await periodSchema.findById(req.query._id).exec();
+
+      const queryFindFileUpload = {
+        $and: [
+          {
+            'period': period._id
+          }
+        ]
+      };
+
+      const queryFindManage = {
+        $and: [
+          {
+            'period.description': period.description
+          }
+        ]
+      };
+
+      const queryFindReporting = {
+        $and: [
+          {
+            'period': period._id
+          }
+        ]
+      };
+
+      await manageSchema.remove(queryFindManage).exec(async (err, response) => { /* Remove rateio */
+        if (err) {
+          return res.status(httpStatus.InternalServerError).send('Erro:' + e);
+        } else {
+          await fileUploadSchema.remove(queryFindFileUpload).exec(async (err, response) => { /* Remove arquivo */
+            if (err) {
+              return res.status(httpStatus.InternalServerError).send('Erro:' + e);
+            } else {
+              await reportingSchema.remove(queryFindReporting).exec(async (err, response) => {
+                if (err) {
+                  return res.status(httpStatus.InternalServerError).send('Erro:' + e);
+                } else {
+                  await period.remove((err, response) => { /* Remove período */
+                    if (err) {
+                      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+                    } else {
+                      res.status(httpStatus.Ok).end();
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function findByDescription(req, res) {
+    try {
+      await connectToDatabase();
+
+      const queryFind = {
+        $and: [
+          {'description': req.query.description}
+        ]
+      };
+
+      let period = await periodSchema.findOne(queryFind).exec();
+
+      if (period === null || period === undefined) {
+        res.status(httpStatus.Ok).json(false);
+      } else {
+        res.status(httpStatus.Ok).json(true);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function create(req, res) {
+    try {
+      await connectToDatabase();
+
+      let activePeriod = await periodSchema.findOne({'isActive': true}).exec();
+      if (activePeriod !== null && activePeriod !== undefined) {
+        activePeriod.isActive = false;
+        activePeriod.save(function (err) {
+          if (err) {
+            res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+          }
+          else {
+            res.status(httpStatus.Created).end();
+          }
+        });
+      }
+
+      let data = req.body.params.period;
+      let newPeriod = new periodSchema(data);
+      newPeriod.initialManageExecuted = false;
+      newPeriod.isActive = true;
+
+      newPeriod.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Created).end();
+        }
+      });
+
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     findAllPeriods: findAllPeriods,
@@ -189,6 +313,9 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema) 
     getQtdHalfHolidaysInActivePeriod: getQtdHalfHolidaysInActivePeriod,
     getQtdFullHolidaysInActivePeriod: getQtdFullHolidaysInActivePeriod,
     findAllPeriodsWithoutFile: findAllPeriodsWithoutFile,
+    findByDescription: findByDescription,
+    remove: remove,
+    create: create,
   }
 };
 

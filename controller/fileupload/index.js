@@ -35,6 +35,7 @@ var fileuploadController = function (fileuploadSchema, manageSchema, periodSchem
       let items = await fileuploadSchema
         .find()
         .populate('employees')
+        .populate({path: 'period', select: "description"})
         .populate({path: 'responsable', select: "name"})
         .skip((limit * page) - limit)
         .limit(limit)

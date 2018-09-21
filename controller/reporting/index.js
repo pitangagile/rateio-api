@@ -24,34 +24,41 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
 
       let period = await periodSchema.findOne({'isActive': true}).exec();
 
-      const queryFind = {
-        $and: [
-          {'period': period._id},
-        ],
-        $or: [
-          {'employee.name': {"$regex": data.query, "$options": "i"}},
-        ]
-      };
+      if (period === null || period === undefined){
+        const result = {
+          data: [],
+          count: 0
+        };
 
-      let total = await reportingSchema.find(queryFind).count().exec();
+        res.status(httpStatus.Ok).json(result);
+      } else{
+        const queryFind = {
+          $and: [
+            {'period': period._id},
+          ],
+          $or: [
+            {'employee.name': {"$regex": data.query, "$options": "i"}},
+          ]
+        };
 
-      let items = await reportingSchema
-        .find(queryFind)
-        .populate('period')
-        .populate('costCenter')
-        .skip((limit * page) - limit)
-        .limit(limit)
-        .sort({'employee.name': 1})
-        .exec();
+        let total = await reportingSchema.find(queryFind).count().exec();
 
-      console.log('total > ', total);
+        let items = await reportingSchema
+          .find(queryFind)
+          .populate('period')
+          .populate('costCenter')
+          .skip((limit * page) - limit)
+          .limit(limit)
+          .sort({'employee.name': 1})
+          .exec();
 
-      const result = {
-        data: items,
-        count: total
-      };
+        const result = {
+          data: items,
+          count: total
+        };
 
-      res.status(httpStatus.Ok).json(result);
+        res.status(httpStatus.Ok).json(result);
+      }
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -101,8 +108,6 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
   async function edit(req, res) {
     try {
       await connectToDatabase();
-
-      console.log('req > ', req);
 
       reportingSchema.findById(req.body._id, function (err, entity) {
         if (err) {
@@ -200,43 +205,51 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       var employee = await employeeSchema.findById(req.query.user_id).exec();
       var period = await periodSchema.findOne({'isActive': true}).exec();
 
-      var response = await reportingSchema.aggregate([
-          {
-            $match:
-              {
-                $and: [
-                  {'employee._id': employee._id},
-                  {'period': period._id}
-                ]
-              }
-          },
-          {
-            $group:
-              {
-                _id: null,
-                totalHoursReportingByActivePeriod:
-                  {$sum: "$totalHoursCostCenter"}
-              },
-          },
-          {
-            $project: {_id: 0, totalHoursReportingByActivePeriod: 1}
-          }
-        ]
-      ).then(function (response, err) {
-        if (err)
-          console.log('err > ', err);
-        return response;
-      });
+      if (period === null || period === undefined) {
+        const result = {
+          data: [],
+        };
 
-      if (response[0] == undefined) {
-        response[0] = {_id: null, totalHoursReportingByActivePeriod: 0}
+        res.status(httpStatus.Ok).json(result);
+      } else {
+        var response = await reportingSchema.aggregate([
+            {
+              $match:
+                {
+                  $and: [
+                    {'employee._id': employee._id},
+                    {'period': period._id}
+                  ]
+                }
+            },
+            {
+              $group:
+                {
+                  _id: null,
+                  totalHoursReportingByActivePeriod:
+                    {$sum: "$totalHoursCostCenter"}
+                },
+            },
+            {
+              $project: {_id: 0, totalHoursReportingByActivePeriod: 1}
+            }
+          ]
+        ).then(function (response, err) {
+          if (err)
+            console.log('err > ', err);
+          return response;
+        });
+
+        if (response[0] == undefined) {
+          response[0] = {_id: null, totalHoursReportingByActivePeriod: 0}
+        }
+
+        const result = {
+          data: response[0],
+        };
+
+        res.status(httpStatus.Ok).json(result);
       }
-
-      const result = {
-        data: response[0],
-      };
-
-      res.status(httpStatus.Ok).json(result);
     } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
@@ -263,8 +276,6 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
         };
 
         let reporting = await reportingSchema.findOne(queryFind).exec();
-
-        console.log('reporting > ', reporting);
 
         if (!reporting) {
           let costCenter = await costCenterSchema.findById(employee.costCenters[i]);
@@ -316,8 +327,6 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
         ]
       ).exec();
 
-      console.log('response > ', response);
-
       if (!response[0]) {
         const result = {
           data: [{totalReq: 0, totalAep: 0, totalImple: 0, totalTst: 0, totalPeg: 0}],
@@ -366,7 +375,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
       };
       res.status(httpStatus.Ok).json(result);
 
-    }catch (e) {
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
@@ -380,7 +389,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
     findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod,
     findReportingHoursDisciplinePerCostCenter: findReportingHoursDisciplinePerCostCenter,
-    findReportingHoursEmployeePerCostCenter : findReportingHoursEmployeePerCostCenter,
+    findReportingHoursEmployeePerCostCenter: findReportingHoursEmployeePerCostCenter,
   }
 };
 
