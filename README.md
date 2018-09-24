@@ -80,6 +80,7 @@ $ yarn deploy
 * **Bruno Monteiro** - [Github](https://github.com/bunomonteiro)
 * **Afonso Amorim** - [Github](https://github.com/afonsosa)
 * **Carlos Victor Gomes** - [Github](https://github.com/carlosvictor)
+* **Glauber Henrique** - [Github](https://github.com/GlauberBatista)
 
 ## Recommendations
 
