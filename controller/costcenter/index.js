@@ -143,7 +143,6 @@ var coastController = function (costCenterSchema) {
    * @param {object} res The Express Response object
    */
   async function createall(req, res) {
-    console.log('Executou o criar todos');
     try {
       await connectToDatabase();
       if (req.body == undefined && req.body.length == 0) {
@@ -157,7 +156,6 @@ var coastController = function (costCenterSchema) {
           description: req.body[i].descricao,
           isActive: true,
         });
-        console.log('Cadastrando: ' + costCenter.description);
         await costCenter.save();
       }
       res.status(httpStatus.Ok).send('Centros de custos adicionados con sucesso!');

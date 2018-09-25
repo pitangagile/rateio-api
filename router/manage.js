@@ -17,6 +17,8 @@ router.get('/api/manage/getAllToDownload', manageController.getAllToDownload);
 router.get('/api/manage/generateManage', manageController.generateManage);
 router.get('/api/manage/isPossibleExecuteManage', manageController.isPossibleExecuteManage);
 router.get('/api/manage/manageExecutedWithSuccess', manageController.manageExecutedWithSuccess);
+router.get('/api/manage/isPossibleExecuteFinalManage', manageController.isPossibleExecuteFinalManage);
+router.get('/api/manage/generateFinalManage', manageController.generateFinalManage);
 
 // POST
 router.post('/api/manage/createManagesFromFile', manageController.createManagesFromFile);

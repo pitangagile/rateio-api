@@ -10,8 +10,6 @@ var holidayController = function (holidaySchema) {
     try {
       await connectToDatabase();
 
-      console.log('JSON.parse(req.query.data) > ', JSON.parse(req.query.data));
-
       let data = JSON.parse(req.query.data);
 
       const limit = parseInt(data.limit);

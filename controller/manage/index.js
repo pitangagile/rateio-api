@@ -73,8 +73,6 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
       let period = await periodSchema.findOne({'isActive': true}).exec();
 
-      console.log('period > ', period);
-
       if (period === null || period === undefined){
         res.status(httpStatus.Ok).json([]);
       } else{
@@ -293,6 +291,7 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
 
   async function updatePeriod(period) {
     period.initialManageExecuted = true;
+    period.endReportingDate = new Date();
     await period.save(function (err) {
       if (err) {
         console.log('err: ' + err);
@@ -380,7 +379,51 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         $and:
           [
             {'isActive': true},
-            {'initialManageExecuted': false}
+            {'initialManageExecuted': false},
+            {'finalManageExecuted': false},
+            {'finalDate' : {$lt:  new Date()}}
+          ]
+      };
+
+      const queryFindFileUpload = {
+        $and:
+          [
+            {'status': 'Sucesso'},
+          ]
+      };
+
+
+      let period = await periodSchema.findOne(queryFindPeriod).exec();
+      let fileUpload = await fileUploadSchema.findOne(queryFindFileUpload).populate('period').exec();
+
+      let executeManage =
+        period !== null
+        && period !== undefined
+        && fileUpload !== null
+        && fileUpload !== undefined
+        && period._id.equals(fileUpload.period._id);
+
+      if (executeManage) {
+        res.status(httpStatus.Ok).json(true);
+      } else {
+        res.status(httpStatus.Ok).json(false);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function isPossibleExecuteFinalManage(req, res) {
+    try {
+      await connectToDatabase();
+
+      const queryFindPeriod = {
+        $and:
+          [
+            {'isActive': true},
+            {'initialManageExecuted': true},
+            {'finalManageExecuted': false},
+            {'finalDate' : {$lt:  new Date()}}
           ]
       };
 
@@ -420,7 +463,8 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
         $and:
           [
             {'isActive': true},
-            {'initialManageExecuted': true}
+            {'initialManageExecuted': true},
+            {'finalManageExecuted': true}
           ]
       };
 
@@ -497,13 +541,37 @@ var manageController = function (manageSchema, employeeSchema, costCenterSchema,
     }
   }
 
+  async function generateFinalManage(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = await periodSchema.findOne({'isActive': true}).exec();
+      period.finalManageExecuted = true;
+      period.endReportingAdminDate = new Date();
+
+      period.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Ok).end();
+        }
+      });
+
+    }catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
   return {
     getAll: getAll,
     getAllToDownload: getAllToDownload,
     generateManage: generateManage,
     createManagesFromFile: createManagesFromFile,
     isPossibleExecuteManage: isPossibleExecuteManage,
-    manageExecutedWithSuccess: manageExecutedWithSuccess
+    manageExecutedWithSuccess: manageExecutedWithSuccess,
+    generateFinalManage: generateFinalManage,
+    isPossibleExecuteFinalManage: isPossibleExecuteFinalManage,
   }
 };
 

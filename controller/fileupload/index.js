@@ -70,8 +70,6 @@ var fileuploadController = function (fileuploadSchema, manageSchema, periodSchem
         'registrations': req.body.registrations ? req.body.registrations.split(',') : [],
       });
 
-      console.log('newfileupload > ', newfileupload);
-
       await newfileupload.save(function (err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);

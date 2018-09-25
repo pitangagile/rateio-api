@@ -289,6 +289,7 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema, 
       let data = req.body.params.period;
       let newPeriod = new periodSchema(data);
       newPeriod.initialManageExecuted = false;
+      newPeriod.finalManageExecuted = false;
       newPeriod.isActive = true;
 
       newPeriod.save(function (err) {

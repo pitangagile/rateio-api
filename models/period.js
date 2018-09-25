@@ -8,6 +8,7 @@ var periodSchema = new mongoose.Schema(
     initialDate: {type: Date, required: [true, '{PATH} é um campo obrigatório']},
     finalDate: {type: Date, required: [true, '{PATH} é um campo obrigatório']},
     initialManageExecuted: {required: true, type: Boolean},
+    finalManageExecuted: {required: true, type: Boolean},
     endReportingDate: Date,
     endReportingManagerDate: Date,
     endReportingAdminDate: Date,
