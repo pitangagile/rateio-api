@@ -140,16 +140,7 @@ var reportingController = function (reportingSchema, employeeSchema, costCenterS
     try {
       await connectToDatabase();
 
-      let reporting = await reportingSchema
-        .findByIdAndRemove(req.query._id)
-        .populate('period')
-        .populate('employee')
-        .exec();
-
-      let employee = await employeeSchema.findById(reporting.employee._id).exec();
-      let period = await periodSchema.findById(reporting.period._id).exec();
-
-      await reportingSchema.findByIdAndRemove(req.query._id).exec().then(function (response, err) {
+      await reportingSchema.findByIdAndRemove(mongoose.Types.ObjectId(req.query._id)).exec().then(function (response, err) {
         if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }

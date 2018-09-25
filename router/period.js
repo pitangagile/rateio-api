@@ -19,7 +19,7 @@ router.get('/api/period/findAllPeriodsWithoutFile', periodController.findAllPeri
 router.get('/api/period/findByDescription', periodController.findByDescription);
 
 router.post('/api/period', periodController.create);
-
+router.put('/api/period', periodController.update);
 router.delete('/api/period', periodController.remove);
 
 module.exports = router;

@@ -305,7 +305,37 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema, 
     }
   }
 
+  async function edit(req, res) {
+    try {
+      await connectToDatabase();
+
+      periodSchema.findById(req.body.params.period._id, function (err, entity) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Período não encontrado');
+        }
+        else {
+          entity.initialDate = req.body.params.period.initialDate;
+          entity.finalDate = req.body.params.period.finalDate;
+          entity.save(function (err) {
+            if (err) {
+              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+            }
+            else {
+              res.status(httpStatus.Ok).end();
+            }
+          })
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
   return {
+    remove: remove,
+    create: create,
+    update: edit,
+
     getAll: getAll,
     findAllPeriods: findAllPeriods,
     pickActivePeriod: pickActivePeriod,
@@ -314,8 +344,6 @@ var periodController = function (periodSchema, holidaySchema, fileUploadSchema, 
     getQtdFullHolidaysInActivePeriod: getQtdFullHolidaysInActivePeriod,
     findAllPeriodsWithoutFile: findAllPeriodsWithoutFile,
     findByDescription: findByDescription,
-    remove: remove,
-    create: create,
   }
 };
 
