@@ -1,137 +1,387 @@
 const utilities = require('../../commons/utilities');
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
+const mongoose = require('mongoose');
+const moment = require('moment-business-days');
 
-var reportingController = function (reportingSchema, coastCenterSchema, periodSchema) {
+var reportingController = function (reportingSchema, employeeSchema, costCenterSchema, periodSchema) {
 
-    /**
-    * Searches all the info necessary to load the "Reportagem" page
-    * @param {object} request
-    * @param {object} response
-    */
-    async function getIndexData (req, res) {
-        try {
-            //todo: receber o identificador do usuário logado no sistema para receber as reportagens dele
-            //todo: Consultar quantidade de horas ideais do colaborador no mês
-            await connectToDatabase();
-            let coastCenters = await coastCenterSchema.find({isActive: true}).select('_id description').exec();
-            let periods = await periodSchema.find().select('_id description').exec();
-            let reportings = await reportingSchema
-                .find().exec();
-            const result = {
-                idealHours: 165,
-                coastCenters: coastCenters,
-                periods: periods,
-                reportings: reportings
-            }
-            res.status(httpStatus.Ok).json(result);
-        } catch (e) {
-            res.status(httpStatus.InternalServerError).send('Erro:' + e);
+  moment.updateLocale('pt',
+    {
+      workingWeekdays: [1, 2, 3, 4, 5]
+    }
+  );
+
+  async function findAllByActivePeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      let data = JSON.parse(req.query.data);
+
+      const limit = parseInt(data.limit);
+      const page = parseInt(data.page);
+
+      let period = await periodSchema.findOne({'isActive': true}).exec();
+
+      if (period === null || period === undefined){
+        const result = {
+          data: [],
+          count: 0
+        };
+
+        res.status(httpStatus.Ok).json(result);
+      } else{
+        const queryFind = {
+          $and: [
+            {'period': period._id},
+          ],
+          $or: [
+            {'employee.name': {"$regex": data.query, "$options": "i"}},
+          ]
+        };
+
+        let total = await reportingSchema.find(queryFind).count().exec();
+
+        let items = await reportingSchema
+          .find(queryFind)
+          .populate('period')
+          .populate('costCenter')
+          .skip((limit * page) - limit)
+          .limit(limit)
+          .sort({'employee.name': 1})
+          .exec();
+
+        const result = {
+          data: items,
+          count: total
+        };
+
+        res.status(httpStatus.Ok).json(result);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function create(req, res) {
+    try {
+      await connectToDatabase();
+
+      const employee = await employeeSchema.findById(req.body.params.user_id).exec();
+      const period = await periodSchema.findById(req.body.params.period._id).exec();
+      const costCenter = await costCenterSchema.findById(req.body.params.costCenter._id).exec();
+
+      let reporting = await new reportingSchema(
+        {
+          'period': period,
+          'employee._id': employee._id,
+          'employee.name': employee.name,
+          'costCenter': costCenter,
+          'totalHoursCostCenter': req.body.params.totalHoursCostCenter,
+          'isPerDiscipline': req.body.params.isPerDiscipline,
+          'discipline.req': req.body.params.discipline.req,
+          'discipline.aep': req.body.params.discipline.aep,
+          'discipline.imple': req.body.params.discipline.imple,
+          'discipline.tst': req.body.params.discipline.tst,
+          'discipline.peg': req.body.params.discipline.peg,
+        });
+
+      reporting.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }
+        else {
+          res.status(httpStatus.Created).end();
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
+  }
 
-    return {
-        getIndexData: getIndexData
+  /**
+   Edit a employee from settings
+   * @param {object} req
+   * @param {object} res
+   */
+  async function edit(req, res) {
+    try {
+      await connectToDatabase();
+
+      reportingSchema.findById(req.body._id, function (err, entity) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Reportagem não encontrada');
+        }
+        else {
+          entity.discipline.req = req.body.discipline.req;
+          entity.discipline.aep = req.body.discipline.aep;
+          entity.discipline.imple = req.body.discipline.imple;
+          entity.discipline.tst = req.body.discipline.tst;
+          entity.discipline.peg = req.body.discipline.peg;
+          entity.isPerDiscipline = req.body.isPerDiscipline;
+          entity.totalHoursCostCenter = req.body.totalHoursCostCenter;
+          entity.save(function (err) {
+            if (err) {
+              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+            }
+            else {
+              res.status(httpStatus.Ok).end();
+            }
+          })
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
-}
+  }
+
+  async function del(req, res) {
+    try {
+      await connectToDatabase();
+
+      await reportingSchema.findByIdAndRemove(mongoose.Types.ObjectId(req.query._id)).exec().then(function (response, err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
+        }
+        else {
+          res.status(httpStatus.Ok).end();
+        }
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findReportsByUserId(req, res) {
+    try {
+      await connectToDatabase();
+
+      let data = JSON.parse(req.query.data);
+
+      const limit = parseInt(data.limit);
+      const page = parseInt(data.page);
+
+      const queryFind = {
+        $and: [
+          {"employee._id": req.query.user_id},
+        ]
+      };
+
+      let total = await reportingSchema.find(queryFind).count().exec();
+
+      let items = await reportingSchema.find(queryFind)
+        .populate('period')
+        .populate('costCenter')
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({code: 1})
+        .exec();
+
+      const result = {
+        data: items,
+        count: total
+      };
+
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function calculateTotalReportingHoursByUserIdAndPerActivePeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema.findById(req.query.user_id).exec();
+      var period = await periodSchema.findOne({'isActive': true}).exec();
+
+      if (period === null || period === undefined) {
+        const result = {
+          data: [],
+        };
+
+        res.status(httpStatus.Ok).json(result);
+      } else {
+        var response = await reportingSchema.aggregate([
+            {
+              $match:
+                {
+                  $and: [
+                    {'employee._id': employee._id},
+                    {'period': period._id}
+                  ]
+                }
+            },
+            {
+              $group:
+                {
+                  _id: null,
+                  totalHoursReportingByActivePeriod:
+                    {$sum: "$totalHoursCostCenter"}
+                },
+            },
+            {
+              $project: {_id: 0, totalHoursReportingByActivePeriod: 1}
+            }
+          ]
+        ).then(function (response, err) {
+          if (err)
+            console.log('err > ', err);
+          return response;
+        });
+
+        if (response[0] == undefined) {
+          response[0] = {_id: null, totalHoursReportingByActivePeriod: 0}
+        }
+
+        const result = {
+          data: response[0],
+        };
+
+        res.status(httpStatus.Ok).json(result);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function findUserCostCenterByUserIdWithoutReportingInPeriod(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = await periodSchema.find({'isActive': true}).exec();
+
+      let employee = await employeeSchema.findById(req.query.user_id).exec();
+
+      var response = [];
+
+      for (var i = 0; i < employee.costCenters.length; i++) {
+
+        const queryFind = {
+          $and: [
+            {'employee._id': req.query.user_id},
+            {'period': period},
+            {'costCenter': employee.costCenters[i]}
+          ]
+        };
+
+        let reporting = await reportingSchema.findOne(queryFind).exec();
+
+        if (!reporting) {
+          let costCenter = await costCenterSchema.findById(employee.costCenters[i]);
+          response.push(costCenter);
+        }
+      }
+
+      const result = {
+        data: response
+      };
+
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findReportingHoursDisciplinePerCostCenter(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = JSON.parse(req.query.period);
+      let costCenter = JSON.parse(req.query.costCenter);
+
+      var response = await reportingSchema.aggregate([
+          {
+            $match:
+              {
+                $and: [
+                  {'costCenter': mongoose.Types.ObjectId(costCenter._id)},
+                  {'period': mongoose.Types.ObjectId(period._id)}
+                ]
+              }
+          },
+          {
+            $group:
+              {
+                _id: null,
+                totalReq: {$sum: "$discipline.req"},
+                totalAep: {$sum: "$discipline.aep"},
+                totalImple: {$sum: "$discipline.imple"},
+                totalTst: {$sum: "$discipline.tst"},
+                totalPeg: {$sum: "$discipline.peg"},
+              },
+          },
+          {
+            $project: {_id: 0, totalReq: 1, totalAep: 2, totalImple: 3, totalTst: 4, totalPeg: 5}
+          }
+        ]
+      ).exec();
+
+      if (!response[0]) {
+        const result = {
+          data: [{totalReq: 0, totalAep: 0, totalImple: 0, totalTst: 0, totalPeg: 0}],
+        };
+        res.status(httpStatus.Ok).json(result);
+      } else {
+        const result = {
+          data: response,
+        };
+        res.status(httpStatus.Ok).json(result);
+      }
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findReportingHoursEmployeePerCostCenter(req, res) {
+    try {
+      await connectToDatabase();
+
+      let period = JSON.parse(req.query.period);
+      let costCenter = JSON.parse(req.query.costCenter);
+
+      var response = await reportingSchema.aggregate([
+          {
+            $match:
+              {
+                $and: [
+                  {'costCenter': mongoose.Types.ObjectId(costCenter._id)},
+                  {'period': mongoose.Types.ObjectId(period._id)}
+                ]
+              }
+          },
+          {
+            $group:
+              {
+                _id: "$employee.name",
+                hours: {$sum: "$totalHoursCostCenter"},
+              },
+          }
+        ]
+      ).exec();
+
+      const result = {
+        data: response,
+      };
+      res.status(httpStatus.Ok).json(result);
+
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  return {
+    findAllByActivePeriod: findAllByActivePeriod,
+    create: create,
+    del: del,
+    update: edit,
+    findReportsByUserId: findReportsByUserId,
+    calculateTotalReportingHoursByUserIdAndPerActivePeriod: calculateTotalReportingHoursByUserIdAndPerActivePeriod,
+    findUserCostCenterByUserIdWithoutReportingInPeriod: findUserCostCenterByUserIdWithoutReportingInPeriod,
+    findReportingHoursDisciplinePerCostCenter: findReportingHoursDisciplinePerCostCenter,
+    findReportingHoursEmployeePerCostCenter: findReportingHoursEmployeePerCostCenter,
+  }
+};
 
 module.exports = reportingController;
-
-// /**
-//  * Creates a new reporting
-//  * @param {object} req The Express Request object
-//  * @param {object} res The Express Response object
-//  */
-// function create(req, res) {
-//     connectToDatabase().then(() => {
-//         co(function* () {
-//             let newReport = new reportingSchema({
-//                 period: req.body.period,
-//                 costCenter: req.body.costCenter,
-//                 hours: req.body.hours,
-//             });
-//             newReport.save();
-//             res.status(httpStatus.Ok).send("Reportagem incluída com sucesso!").end();
-//         }).catch((error) => {
-//             res.send('Erro:' + error);
-//         });
-//     });
-// }
-
-// /**
-//  * Search reportings per date
-//  * @param {object} req
-//  * @param {object} res
-//  */
-// function search(req, res) {
-//     const period = req.body.period;
-
-//     if(period === undefined){
-//         res.status(httpStatus.BadRequest).send('Período não informado!');
-//         return;
-//     }
-//     connectToDatabase().then(() => {
-//         co(function* () {
-//             let reportings = yield reportingSchema.find();
-//             let result = reportings.filter(data => data.period === period);
-//             res.json(result);
-//         }).catch((error) => {
-//             res.send('Erro:' + error);
-//         });
-//     });
-// }
-
-// function update(req, res) {
-//     connectToDatabase().then(() => {
-//         co(function* () {
-//             let reporting = yield reportingSchema.findOneAndUpdate({"_id" :  req.body.id}, { $set: { "hours" : req.body.hours } }).exec();
-//             res.send(reporting);
-//         }).catch((error) => {
-//             res.send('Erro:' + error);
-//         });
-//     })
-// }
-
-// /**
-//  * Busca todos as reportagens do banco de dados
-//  * @param {object} req
-//  * @param {object} res
-//  */
-// function getAll(req, res){
-//     connectToDatabase()
-//     .then(() => {
-//         co(function*() {
-//             let reporting = yield reportingSchema.find().exec();
-//             res.send(reporting);
-//         }).catch((error) => {
-//             res.send('Erro:' + error);
-//         });
-//     });
-// }
-
-// /**
-//  * Deletes a report
-//  * @param {object} req The Express Request object
-//  * @param {object} res The Express Response object
-//  */
-// function deletePost(req, res) {
-//     console.log(req.body.id);
-//     connectToDatabase().then(() => {
-//         co(function* () {
-//             const result = yield reportingSchema.findByIdAndRemove(req.body.id).exec();
-//             res.status(httpStatus.Ok).end();
-//         }).catch((error) => {
-//             res.send('Erro:' + error);
-//         });
-//     });
-// }
-
-// module.exports = {
-//     getIndexData,
-//     search,
-//     create,
-//     deletePost,
-//     getAll,
-//     update,
-// }

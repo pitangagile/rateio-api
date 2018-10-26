@@ -1,127 +1,260 @@
-const httpStatus = require('../../commons/http_status_codes')
+const httpStatus = require('../../commons/http_status_codes');
 const errors = require('../../commons/errors');
 const connectToDatabase = require('../../commons/database');
+const mongoose = require('mongoose');
 
-var employeeController = function(employeeSchema) {
+var employeeController = function (employeeSchema, costCenterSchema) {
   /**
-  * Get all employees in database
-  * @param {object} req
-  * @param {object} res
-  */
-  async function getAll(req, res){
+   * Get all employees in database
+   * @param {object} req
+   * @param {object} res
+   */
+  async function getAll(req, res) {
     try {
       await connectToDatabase();
-      let items = await employeeSchema.find({isActive: true}).exec();
-      res.status(httpStatus.Ok).json(items);
-    } catch(e) {
-      res.status(httpStatus.InternalServerError).send('Erro:' + e);
-    }
-  }
-
-  /**
-  Find to populate grid for interface
-  * @param {object} req
-  * @param {object} res
-  */
-  async function getGridList(req, res) {
-    console.log(req.body);
-    try {
-      await connectToDatabase();
-      let items = await employeeSchema.find({isActive: true})
-        .populate({path:'coastCenterOrigin', select:'description -_id'})
-        .select('name email registration')
+      let total = await employeeSchema.find().exec();
+      let items = await costCenterSchema
+        .find()
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({code: 1})
         .exec();
       const result = {
         data: items,
-        count: items.length
-      }
-      res.status(httpStatus.Ok).json(result);
-    } catch(e) {
+        count: total
+      };
+      res.status(httpStatus.Ok).json(items);
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
 
   /**
-  Create a new employee
-  * @param {object} req
-  * @param {object} res
-  */
+   Find to populate grid for interface
+   * @param {object} req
+   * @param {object} res
+   */
+  async function getGridList(req, res) {
+    try {
+      const limit = parseInt(req.query.limit);
+      const page = parseInt(req.query.page);
+
+      const queryFind = {
+        $or: [
+          {"name": {"$regex": req.query.query, "$options": "i"}},
+        ]
+      };
+      await connectToDatabase();
+      const total = await employeeSchema.find(queryFind).count().exec();
+      let items = await employeeSchema
+        .find(queryFind)
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({name: 1})
+        .exec();
+      const result = {
+        data: items,
+        count: total
+      };
+      res.status(httpStatus.Ok).json(result);
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  /**
+   Create a new employee
+   * @param {object} req
+   * @param {object} res
+   */
   async function create(req, res) {
     try {
       await connectToDatabase();
-      let newEmployee = new employeeSchema(req.body);
-      newEmployee.isActive = true;
+
+      let employee = req.body.params.employee;
+      let newEmployee = new employeeSchema(employee);
 
       newEmployee.save(function (err) {
-        if(err) {
+        if (err) {
           res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }
         else {
           res.status(httpStatus.Created).end();
         }
       });
-    } catch(e) {
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
 
   /**
-  Desactive a employee
-  * @param {object} req
-  * @param {object} res
-  */
+   Desactive a employee
+   * @param {object} req
+   * @param {object} res
+   */
   async function del(req, res) {
     try {
       await connectToDatabase();
-      employeeSchema.findById(req.param.id, function(err, entity) {
-        if(err) {
-          res.status(httpStatus.NotFound).send('Funcionário não encontrado');
+
+      var employee = await employeeSchema.findById(req.query.user_id).exec();
+
+      employee.costCenters.remove(req.query.costCenterId);
+      employee.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }
         else {
-          entity.remove(function (err) {
-            if(err) {
-              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-            }
-            else {
-              res.status(httpStatus.Ok).end();
-            }
-          })
+          res.status(httpStatus.Ok).end();
         }
       });
-    } catch(e) {
+    } catch (e) {
       res.status(httpStatus.InternalServerError).send('Erro: ' + e);
     }
   }
 
   /**
-  Edit a employee from settings
-  * @param {object} req
-  * @param {object} res
-  */
-  async function edit (req, res) {
+   Edit a employee from settings
+   * @param {object} req
+   * @param {object} res
+   */
+  async function edit(req, res) {
     try {
       await connectToDatabase();
-      employeeController.findById(req.body.id, function(err, entity) {
-        if(err) {
-          res.status(httpStatus.InternalServerError).send('Funcionário não encontrado');
+
+      let employeeId = req.body.params.employee._id;
+
+      await employeeSchema.findById(employeeId).exec();
+
+      await employeeSchema.findByIdAndUpdate(employeeId, req.body.params.employee, function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro ao atualizar colaborador');
+        }
+        res.status(httpStatus.Ok).end();
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+    }
+  }
+
+  async function findUserCostCentersByUserId(req, res) {
+    try {
+      await connectToDatabase();
+
+      const limit = parseInt(req.query.limit);
+      const page = parseInt(req.query.page);
+
+      var employee = await employeeSchema.findById(mongoose.Types.ObjectId(req.query.user_id), 'costCenters').exec();
+
+      let listIdCostCenters = employee.costCenters;
+      let costCenters = await costCenterSchema.find({'_id': {$in: listIdCostCenters}})
+        .skip((limit * page) - limit)
+        .limit(limit)
+        .sort({code: 1})
+        .exec();
+
+      const result = {
+        data: costCenters,
+        count: costCenters.length
+      };
+
+      res.status(httpStatus.Ok).json(result);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function findEmployeeById(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema
+        .findById(req.query.user_id)
+        .exec();
+
+      res.status(httpStatus.Ok).json(employee);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function findEmployeeByEmail(req, res) {
+    try {
+      await connectToDatabase();
+
+      queryFind = {
+        $and: [{'email': req.query.email}]
+      };
+
+      var employee = await employeeSchema
+        .find(queryFind)
+        .exec();
+
+      res.status(httpStatus.Ok).json(employee[0]);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function findCostCentersWithoutUserId(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema.findById(req.query.user_id, 'costCenters').exec();
+
+      let listIdCostCenters = employee.costCenters;
+      let notUserCostCenters = await costCenterSchema.find({'_id': {$nin: listIdCostCenters}})
+        .sort({description: 1})
+        .exec();
+
+      res.status(httpStatus.Ok).send(notUserCostCenters);
+    } catch
+      (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function addCostCenter(req, res) {
+    try {
+      await connectToDatabase();
+
+      var employee = await employeeSchema.findById(req.body.params.user_id).exec();
+      var costCenter = await costCenterSchema.findOne({"_id" : req.body.params.costCenter._id}).exec();
+
+      await employee.costCenters.push(costCenter._id);
+
+      employee.save(function (err) {
+        if (err) {
+          res.status(httpStatus.InternalServerError).send('Erro: ' + err);
         }
         else {
-          entity.coastCenters = req.body.coastCenters;
-          entity.workHours = req.body.workHours;
-          entity.isPj = req.body.isPj;
-
-          entity.save(function (err) {
-            if(err) {
-              res.status(httpStatus.InternalServerError).send('Erro: ' + err);
-            }
-            else {
-              res.status(httpStatus.Ok).end();
-            }
-          })
+          res.status(httpStatus.Ok).end();
         }
-      })
-    } catch(e) {
-      res.status(httpStatus.InternalServerError).send('Erro: ' + e);
+      });
+    } catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
+    }
+  }
+
+  async function validateAllEmployeesFromSpreadsheet(req, res) {
+    try {
+      await connectToDatabase();
+
+      let registrations = req.query.registrations;
+
+      var registrationsNotInDatabase = [];
+
+      for(var i = 0; i < registrations.length; i++){
+        let employees = await employeeSchema.findOne({$and : [{'registration' : registrations[i]}]}).exec();
+        if (!employees){
+          registrationsNotInDatabase.push(registrations[i]);
+        }
+      }
+      res.status(httpStatus.Ok).json(registrationsNotInDatabase);
+    }catch (e) {
+      res.status(httpStatus.InternalServerError).send('Erro:' + e);
     }
   }
 
@@ -130,8 +263,14 @@ var employeeController = function(employeeSchema) {
     getGridList: getGridList,
     create: create,
     delete: del,
-    update: edit
+    update: edit,
+    findEmployeeById: findEmployeeById,
+    findUserCostCentersByUserId: findUserCostCentersByUserId,
+    findCostCentersWithoutUserId: findCostCentersWithoutUserId,
+    findEmployeeByEmail: findEmployeeByEmail,
+    addCostCenter: addCostCenter,
+    validateAllEmployeesFromSpreadsheet : validateAllEmployeesFromSpreadsheet
   }
-}
+};
 
 module.exports = employeeController;

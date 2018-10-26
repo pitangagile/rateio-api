@@ -1,4 +1,4 @@
-const coastcenters = [
+const costcenters = [
     {code:'1.1.1.001', description:'Centro de custo 1'},
     {code:'1.1.1.002', description:'Centro de custo 2'},
     {code:'1.1.1.003', description:'Centro de custo 3'},
@@ -10,4 +10,4 @@ const coastcenters = [
     {code:'1.1.1.009', description:'Centro de custo 9'},
 ];
 
-module.exports = coastcenters;
+module.exports = costcenters;
